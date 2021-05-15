@@ -23,6 +23,7 @@ logger = logging.getLogger()
 
 class Chess(object):
 
+    NONE = 0
     RED = 1
     BLACK = -1
 
@@ -84,21 +85,165 @@ class Game(Chess):
 
     def __init__(self):
         self.board = mat(zeros((Chess.W, Chess.H)), dtype=int)
+        self.turn = Chess.RED
 
         for pos, chess in self.ORIGIN.items():
             self.board[pos] = chess
 
-    def move(self, first, second):
-        chess = self.board[first]
-        self.board[first] = 0
-        self.board[second] = chess
+    def validate_rook(self, fpos, tpos, chess, color):
+        if fpos[0] == tpos[0]:
+            for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
+                pos = (fpos[0], var)
+                if self.board[pos]:
+                    return False
+            return True
+        elif fpos[1] == tpos[1]:
+            for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
+                pos = (var, fpos[1])
+                if self.board[pos]:
+                    return False
+            return True
+        else:
+            return False
+
+    def validate_horse(self, fpos, tpos, chess, color):
+        offset = (abs(fpos[0] - tpos[0]), abs(fpos[1] - tpos[1]))
+        if offset == (1, 2) and not self.board[(fpos[0], (fpos[1] + tpos[1]) // 2)]:
+            return True
+        elif offset == (2, 1) and not self.board[((fpos[0] + tpos[0]) // 2, fpos[1])]:
+            return True
+        else:
+            return False
+
+    def validate_bishop(self, fpos, tpos, chess, color):
+        if color == Chess.BLACK and tpos[1] > 4:
+            return False
+        if color == Chess.RED and tpos[1] < 5:
+            return False
+
+        if abs(fpos[1] - tpos[1]) != 2:
+            return False
+        if abs(fpos[0] - tpos[0]) != 2:
+            return False
+        pos = ((fpos[0] + tpos[0]) // 2, (fpos[1] + tpos[1]) // 2)
+        if self.board[pos]:  # 卡象眼
+            return False
+        return True
+
+    def validate_knight(self, fpos, tpos, chess, color):
+        if tpos[0] < 3 or tpos[0] > 5:
+            return False
+        if color == Chess.BLACK and tpos[1] > 2:
+            return False
+        if color == Chess.RED and tpos[1] < 7:
+            return False
+
+        if abs(fpos[1] - tpos[1]) == 1 and abs(fpos[0] - tpos[0]) == 1:
+            return True
+        return False
+
+    def validate_king(self, fpos, tpos, chess, color):
+        if tpos[0] < 3 or tpos[0] > 5:
+            return False
+        if color == Chess.BLACK and tpos[1] > 2:
+            return False
+        if color == Chess.RED and tpos[1] < 7:
+            return False
+
+        if fpos[0] == tpos[0] and abs(fpos[1] - tpos[1]) == 1:
+            return True
+        elif fpos[1] == tpos[1] and abs(fpos[0] - tpos[0]) == 1:
+            return True
+        else:
+            return False
+
+    def validate_cannon(self, fpos, tpos, chess, color):
+        if fpos[0] == tpos[0]:
+            barrier = 0
+            for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
+                pos = (fpos[0], var)
+                if self.board[pos] and barrier == 1:
+                    return False
+                if self.board[pos]:
+                    barrier = 1
+        elif fpos[1] == tpos[1]:
+            barrier = 0
+            for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
+                pos = (var, fpos[1])
+                if self.board[pos] and barrier == 1:
+                    return False
+                if self.board[pos]:
+                    barrier = 1
+        else:
+            return False
+
+        if barrier == 0 and not self.board[tpos]:
+            return True
+        elif barrier == 1 and self.board[tpos] and np.sign(self.board[tpos]) != color:
+            return True
+        return False
+
+    def validate_pawn(self, fpos, tpos, chess, color):
+        offset = (abs(fpos[0] - tpos[0]), abs(fpos[1] - tpos[1]))
+        if offset not in {(0, 1), (1, 0)}:
+            return False
+        if color == Chess.RED:
+            if (tpos[1] - fpos[1]) > 0:
+                return False
+            if fpos[1] > 4 and fpos[0] - tpos[0] != 0:
+                return False
+        if color == Chess.BLACK:
+            if (tpos[1] - fpos[1]) < 0:
+                return False
+            if fpos[1] < 5 and fpos[0] - tpos[0] != 0:
+                return False
+
+        return True
+
+    def validate(self, fpos, tpos):
+        if fpos == tpos:
+            return False
+
+        fchess = self.board[fpos]
+        tchess = self.board[tpos]
+
+        if np.sign(fchess) == np.sign(tchess):
+            return False
+
+        chess = abs(fchess)
+        color = np.sign(fchess)
+
+        if chess == Chess.ROOK:
+            return self.validate_rook(fpos, tpos, chess, color)
+        elif chess == Chess.HORSE:
+            return self.validate_horse(fpos, tpos, chess, color)
+        elif chess == Chess.BISHOP:
+            return self.validate_bishop(fpos, tpos, chess, color)
+        elif chess == Chess.KNIGHT:
+            return self.validate_knight(fpos, tpos, chess, color)
+        elif chess == Chess.KING:
+            return self.validate_king(fpos, tpos, chess, color)
+        elif chess == Chess.CANNON:
+            return self.validate_cannon(fpos, tpos, chess, color)
+        elif chess == Chess.PAWN:
+            return self.validate_pawn(fpos, tpos, chess, color)
+        else:
+            return False
+
+    def move(self, fpos, tpos):
+        if not self.validate(fpos, tpos):
+            return False
+
+        self.board[tpos] = self.board[fpos]
+        self.board[fpos] = Chess.NONE
+        self.turn *= -1
+        return True
 
 
 class Board(QLabel):
 
     flags = QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint
 
-    FAVICON = os.path.join(dirname, 'images/favicon.ico')
     BOARD = os.path.join(dirname, u"images/board.png")
     MARK = os.path.join(dirname, 'images/mark.png')
     ROOK1 = os.path.join(dirname, 'images/black_rook.png')
@@ -124,10 +269,8 @@ class Board(QLabel):
         }
     }
 
-    def __init__(self):
-        super().__init__()
-        self.setWindowIcon(QtGui.QIcon(self.FAVICON))
-        self.setWindowTitle(u"Chinese Chess")
+    def __init__(self, parent):
+        super().__init__(parent)
         self.setPixmap(QtGui.QPixmap(self.BOARD))
         self.setObjectName(u"Chess")
         self.setScaledContents(True)
@@ -163,8 +306,8 @@ class Board(QLabel):
                 self.setChess(pos, self.game.board[pos])
 
     def resizeEvent(self, event):
-        w = self.width()
-        h = self.height()
+        w = self.parentWidget().width()
+        h = self.parentWidget().height()
 
         height = h
         width = h / Chess.H * Chess.W
@@ -173,7 +316,12 @@ class Board(QLabel):
             width = w
             height = width / Chess.W * Chess.H
 
-        self.resize(int(width), int(height))
+        width = int(width)
+        height = int(height)
+
+        x = (w - width) // 2
+        y = (h - height) // 2
+        self.setGeometry(x, y, width, height)
         self.csize = width // Chess.W
 
         for w in range(Chess.W):
@@ -183,6 +331,15 @@ class Board(QLabel):
                 if not label:
                     continue
                 label.setGeometry(self.getChessGeometry(label.pos))
+
+    def setChoice(self, pos):
+        if self.game.turn != np.sign(self.game.board[pos]):
+            return
+
+        self.choice = pos
+        self.mark1.setGeometry(self.getChessGeometry(pos))
+        self.mark1.setVisible(True)
+        self.mark2.setVisible(False)
 
     def mousePressEvent(self, event):
         pos = self.getPosition(event)
@@ -195,18 +352,16 @@ class Board(QLabel):
             return
 
         if not self.choice:
-            self.choice = pos
-            self.mark1.setGeometry(self.getChessGeometry(pos))
-            self.mark1.setVisible(True)
-            self.mark2.setVisible(False)
+            self.setChoice(pos)
             return
 
-        if not chess:
-            self.game.move(self.choice, pos)
+        if self.game.move(self.choice, pos):
             self.mark2.setGeometry(self.getChessGeometry(pos))
             self.mark2.setVisible(True)
             self.refresh()
             self.choice = None
+        elif chess:
+            self.setChoice(pos)
 
     def setChess(self, pos, chess):
         label = self.labels[pos]
@@ -247,10 +402,25 @@ class Board(QLabel):
         return (int(x), int(y))
 
 
+class MainWindow(QtWidgets.QMainWindow):
+
+    FAVICON = os.path.join(dirname, 'images/favicon.ico')
+
+    def __init__(self):
+        super().__init__()
+        self.board = Board(self)
+        self.setWindowIcon(QtGui.QIcon(self.FAVICON))
+        self.setWindowTitle(u"Chinese Chess")
+        self.resize(810, 900)
+
+    def resizeEvent(self, event):
+        self.board.resizeEvent(event)
+
+
 def main():
     app = QtWidgets.QApplication(sys.argv)
-    board = Board()
-    board.show()
+    window = MainWindow()
+    window.showMaximized()
     sys.exit(app.exec_())
 
 
