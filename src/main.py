@@ -90,14 +90,14 @@ class Game(Chess):
         for pos, chess in self.ORIGIN.items():
             self.board[pos] = chess
 
-    def validate_rook(self, fpos, tpos, chess, color):
-        if fpos[0] == tpos[0]:
+    def validate_rook(self, fpos, tpos, chess, color, offset):
+        if offset[0] == 0:
             for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
                 pos = (fpos[0], var)
                 if self.board[pos]:
                     return False
             return True
-        elif fpos[1] == tpos[1]:
+        elif offset[1] == 0:
             for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
                 pos = (var, fpos[1])
                 if self.board[pos]:
@@ -106,8 +106,7 @@ class Game(Chess):
         else:
             return False
 
-    def validate_horse(self, fpos, tpos, chess, color):
-        offset = (abs(fpos[0] - tpos[0]), abs(fpos[1] - tpos[1]))
+    def validate_horse(self, fpos, tpos, chess, color, offset):
         if offset == (1, 2) and not self.board[(fpos[0], (fpos[1] + tpos[1]) // 2)]:
             return True
         elif offset == (2, 1) and not self.board[((fpos[0] + tpos[0]) // 2, fpos[1])]:
@@ -115,34 +114,32 @@ class Game(Chess):
         else:
             return False
 
-    def validate_bishop(self, fpos, tpos, chess, color):
+    def validate_bishop(self, fpos, tpos, chess, color, offset):
+        if offset != (2, 2):
+            return False
+
         if color == Chess.BLACK and tpos[1] > 4:
             return False
         if color == Chess.RED and tpos[1] < 5:
             return False
 
-        if abs(fpos[1] - tpos[1]) != 2:
-            return False
-        if abs(fpos[0] - tpos[0]) != 2:
-            return False
         pos = ((fpos[0] + tpos[0]) // 2, (fpos[1] + tpos[1]) // 2)
         if self.board[pos]:  # 卡象眼
             return False
         return True
 
-    def validate_knight(self, fpos, tpos, chess, color):
+    def validate_knight(self, fpos, tpos, chess, color, offset):
+        if offset != (1, 1):
+            return False
         if tpos[0] < 3 or tpos[0] > 5:
             return False
         if color == Chess.BLACK and tpos[1] > 2:
             return False
         if color == Chess.RED and tpos[1] < 7:
             return False
+        return True
 
-        if abs(fpos[1] - tpos[1]) == 1 and abs(fpos[0] - tpos[0]) == 1:
-            return True
-        return False
-
-    def validate_king(self, fpos, tpos, chess, color):
+    def validate_king(self, fpos, tpos, chess, color, offset):
         if tpos[0] < 3 or tpos[0] > 5:
             return False
         if color == Chess.BLACK and tpos[1] > 2:
@@ -157,8 +154,8 @@ class Game(Chess):
         else:
             return False
 
-    def validate_cannon(self, fpos, tpos, chess, color):
-        if fpos[0] == tpos[0]:
+    def validate_cannon(self, fpos, tpos, chess, color, offset):
+        if offset[0] == 0:
             barrier = 0
             for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
                 pos = (fpos[0], var)
@@ -166,7 +163,7 @@ class Game(Chess):
                     return False
                 if self.board[pos]:
                     barrier = 1
-        elif fpos[1] == tpos[1]:
+        elif offset[1] == 0:
             barrier = 0
             for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
                 pos = (var, fpos[1])
@@ -183,8 +180,7 @@ class Game(Chess):
             return True
         return False
 
-    def validate_pawn(self, fpos, tpos, chess, color):
-        offset = (abs(fpos[0] - tpos[0]), abs(fpos[1] - tpos[1]))
+    def validate_pawn(self, fpos, tpos, chess, color, offset):
         if offset not in {(0, 1), (1, 0)}:
             return False
         if color == Chess.RED:
@@ -210,23 +206,24 @@ class Game(Chess):
         if np.sign(fchess) == np.sign(tchess):
             return False
 
+        offset = (abs(tpos[0] - fpos[0]), abs(tpos[1] - fpos[1]))
         chess = abs(fchess)
         color = np.sign(fchess)
 
         if chess == Chess.ROOK:
-            return self.validate_rook(fpos, tpos, chess, color)
+            return self.validate_rook(fpos, tpos, chess, color, offset)
         elif chess == Chess.HORSE:
-            return self.validate_horse(fpos, tpos, chess, color)
+            return self.validate_horse(fpos, tpos, chess, color, offset)
         elif chess == Chess.BISHOP:
-            return self.validate_bishop(fpos, tpos, chess, color)
+            return self.validate_bishop(fpos, tpos, chess, color, offset)
         elif chess == Chess.KNIGHT:
-            return self.validate_knight(fpos, tpos, chess, color)
+            return self.validate_knight(fpos, tpos, chess, color, offset)
         elif chess == Chess.KING:
-            return self.validate_king(fpos, tpos, chess, color)
+            return self.validate_king(fpos, tpos, chess, color, offset)
         elif chess == Chess.CANNON:
-            return self.validate_cannon(fpos, tpos, chess, color)
+            return self.validate_cannon(fpos, tpos, chess, color, offset)
         elif chess == Chess.PAWN:
-            return self.validate_pawn(fpos, tpos, chess, color)
+            return self.validate_pawn(fpos, tpos, chess, color, offset)
         else:
             return False
 
