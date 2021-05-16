@@ -20,7 +20,10 @@ from PySide6.QtGui import QPixmap
 
 dirname = os.path.dirname(__file__)
 
-logging.basicConfig(stream=sys.stdout, level=logging.DEBUG)
+logging.basicConfig(
+    stream=sys.stdout,
+    level=logging.DEBUG,
+    format='[%(lineno)d] %(levelname)s %(message)s',)
 logger = logging.getLogger()
 
 
@@ -127,6 +130,8 @@ class Engine(threading.Thread):
         self.running = True
         while self.running:
             output = self.stdout.readline().strip().decode("utf-8")
+            if not output:
+                continue
             logger.info(output)
             self.deal_message(output)
 
@@ -170,6 +175,7 @@ class Engine(threading.Thread):
 
     def send_command(self, cmd):
         try:
+            logger.debug(cmd)
             bytes = f'{cmd}\n'.encode('utf-8')
             self.stdin.write(bytes)
             self.stdin.flush()
@@ -252,6 +258,12 @@ class Game(Chess):
     }
 
     def __init__(self):
+        self.reset()
+
+    def reset(self):
+        if hasattr(self, 'engine'):
+            self.engine.close()
+        self.engine = Engine()
         self.board = mat(zeros((Chess.W, Chess.H)), dtype=int)
         self.turn = Chess.RED
         self.bout = 1
@@ -259,8 +271,6 @@ class Game(Chess):
 
         for pos, chess in self.ORIGIN.items():
             self.board[pos] = chess
-
-        self.engine = Engine()
 
     def validate_rook(self, fpos, tpos, chess, color, offset):
         if offset[0] == 0:
@@ -404,9 +414,9 @@ class Game(Chess):
             return False
 
         if self.board[tpos]:
-            self.draw += 1
-        else:
             self.draw = 0
+        else:
+            self.draw += 1
 
         self.board[tpos] = self.board[fpos]
         self.board[fpos] = Chess.NONE
@@ -453,9 +463,6 @@ class Game(Chess):
         result = ' '.join(items)
 
         return result
-
-    def set_fen(self):
-        pass
 
 
 class Board(QLabel):
@@ -608,6 +615,10 @@ class Board(QLabel):
         elif chess:
             self.setChoice(pos)
 
+        if self.game.turn == Chess.BLACK:
+            thread = threading.Thread(target=self.next)
+            thread.start()
+
     def setChess(self, pos, chess):
         label = self.labels[pos]
         if not label:
@@ -646,13 +657,27 @@ class Board(QLabel):
 
         return (int(x), int(y))
 
-    def hint(self):
+    def next(self):
+        time.sleep(0.1)
+        self.hint(depth=3)
+
+    def reset(self):
+        self.game.reset()
+        self.refresh()
+        self.mark1.setVisible(False)
+        self.mark2.setVisible(False)
+
+    def hint(self, depth=7):
+        if not depth:
+            depth = 7
+
         fen = self.game.get_fen()
         logger.debug(fen)
-        self.game.engine.go_from(fen)
+
+        self.game.engine.go_from(fen, depth)
         while True:
             move = self.game.engine.moves.get()
-            logger.debug(move)
+            # logger.debug(move)
             if move.action in ['bestmove', 'nobestmove']:
                 break
 
@@ -678,10 +703,16 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.board.setBoardImage()
         # self.resize(810, 900)
 
-        self.ui.hint.clicked.connect(self.ui.board.hint)
+        self.ui.reset.clicked.connect(self.ui.board.reset)
+        self.ui.hint.clicked.connect(self.hint)
 
     def resizeEvent(self, event):
         self.ui.board.resizeEvent(event)
+
+    def hint(self):
+        self.ui.hint.setEnabled(False)
+        self.ui.board.hint()
+        self.ui.hint.setEnabled(True)
 
     def closeEvent(self, event):
         self.ui.board.closeEvent(event)
