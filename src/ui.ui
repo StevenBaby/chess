@@ -191,7 +191,7 @@
   <customwidget>
    <class>Board</class>
    <extends>QLabel</extends>
-   <header location="global">main</header>
+   <header location="global">board</header>
   </customwidget>
  </customwidgets>
  <resources/>
