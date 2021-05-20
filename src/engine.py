@@ -21,7 +21,7 @@ from attrdict import attrdict
 logging.basicConfig(
     stream=sys.stdout,
     level=logging.DEBUG,
-    format='[%(filename)s:%(lineno)d] %(levelname)s %(message)s',)
+    format='[%(asctime)s] [%(filename)s:%(lineno)d] %(levelname)s %(message)s',)
 logger = logging.getLogger()
 
 dirpath = Path(__file__).parent
@@ -163,31 +163,31 @@ class Engine(threading.Thread):
         if self.pipe:
             self.pipe.terminate()
 
-    def validate_rook(self, fpos, tpos, chess, color, offset):
+    def validate_rook(self, board, fpos, tpos, chess, color, offset):
         if offset[0] == 0:
             for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
                 pos = (fpos[0], var)
-                if self.board[pos]:
+                if board[pos]:
                     return False
             return True
         elif offset[1] == 0:
             for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
                 pos = (var, fpos[1])
-                if self.board[pos]:
+                if board[pos]:
                     return False
             return True
         else:
             return False
 
-    def validate_knight(self, fpos, tpos, chess, color, offset):
-        if offset == (1, 2) and not self.board[(fpos[0], (fpos[1] + tpos[1]) // 2)]:
+    def validate_knight(self, board, fpos, tpos, chess, color, offset):
+        if offset == (1, 2) and not board[(fpos[0], (fpos[1] + tpos[1]) // 2)]:
             return True
-        elif offset == (2, 1) and not self.board[((fpos[0] + tpos[0]) // 2, fpos[1])]:
+        elif offset == (2, 1) and not board[((fpos[0] + tpos[0]) // 2, fpos[1])]:
             return True
         else:
             return False
 
-    def validate_bishop(self, fpos, tpos, chess, color, offset):
+    def validate_bishop(self, board, fpos, tpos, chess, color, offset):
         if offset != (2, 2):
             return False
 
@@ -197,11 +197,11 @@ class Engine(threading.Thread):
             return False
 
         pos = ((fpos[0] + tpos[0]) // 2, (fpos[1] + tpos[1]) // 2)
-        if self.board[pos]:  # 卡象眼
+        if board[pos]:  # 卡象眼
             return False
         return True
 
-    def validate_advisor(self, fpos, tpos, chess, color, offset):
+    def validate_advisor(self, board, fpos, tpos, chess, color, offset):
         if offset != (1, 1):
             return False
         if tpos[0] < 3 or tpos[0] > 5:
@@ -212,7 +212,7 @@ class Engine(threading.Thread):
             return False
         return True
 
-    def validate_king(self, fpos, tpos, chess, color, offset):
+    def validate_king(self, board, fpos, tpos, chess, color, offset):
         if tpos[0] < 3 or tpos[0] > 5:
             return False
         if color == Chess.BLACK and tpos[1] > 2:
@@ -227,33 +227,33 @@ class Engine(threading.Thread):
         else:
             return False
 
-    def validate_cannon(self, fpos, tpos, chess, color, offset):
+    def validate_cannon(self, board, fpos, tpos, chess, color, offset):
         if offset[0] == 0:
             barrier = 0
             for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
                 pos = (fpos[0], var)
-                if self.board[pos] and barrier == 1:
+                if board[pos] and barrier == 1:
                     return False
-                if self.board[pos]:
+                if board[pos]:
                     barrier = 1
         elif offset[1] == 0:
             barrier = 0
             for var in range(min(fpos[0], tpos[0]) + 1, max(fpos[0], tpos[0])):
                 pos = (var, fpos[1])
-                if self.board[pos] and barrier == 1:
+                if board[pos] and barrier == 1:
                     return False
-                if self.board[pos]:
+                if board[pos]:
                     barrier = 1
         else:
             return False
 
-        if barrier == 0 and not self.board[tpos]:
+        if barrier == 0 and not board[tpos]:
             return True
-        elif barrier == 1 and self.board[tpos] and np.sign(self.board[tpos]) != color:
+        elif barrier == 1 and board[tpos] and np.sign(board[tpos]) != color:
             return True
         return False
 
-    def validate_pawn(self, fpos, tpos, chess, color, offset):
+    def validate_pawn(self, board, fpos, tpos, chess, color, offset):
         if offset not in {(0, 1), (1, 0)}:
             return False
         if color == Chess.RED:
@@ -269,12 +269,12 @@ class Engine(threading.Thread):
 
         return True
 
-    def validate(self, fpos, tpos):
+    def validate(self, board, fpos, tpos):
         if fpos == tpos:
             return False
 
-        fchess = self.board[fpos]
-        tchess = self.board[tpos]
+        fchess = board[fpos]
+        tchess = board[tpos]
 
         if np.sign(fchess) == np.sign(tchess):
             return False
@@ -284,28 +284,48 @@ class Engine(threading.Thread):
         color = np.sign(fchess)
 
         if chess == Chess.ROOK:
-            return self.validate_rook(fpos, tpos, chess, color, offset)
+            return self.validate_rook(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.KNIGHT:
-            return self.validate_knight(fpos, tpos, chess, color, offset)
+            return self.validate_knight(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.BISHOP:
-            return self.validate_bishop(fpos, tpos, chess, color, offset)
+            return self.validate_bishop(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.ADVISOR:
-            return self.validate_advisor(fpos, tpos, chess, color, offset)
+            return self.validate_advisor(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.KING:
-            return self.validate_king(fpos, tpos, chess, color, offset)
+            return self.validate_king(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.CANNON:
-            return self.validate_cannon(fpos, tpos, chess, color, offset)
+            return self.validate_cannon(board, fpos, tpos, chess, color, offset)
         elif chess == Chess.PAWN:
-            return self.validate_pawn(fpos, tpos, chess, color, offset)
+            return self.validate_pawn(board, fpos, tpos, chess, color, offset)
         else:
             return False
 
     def color(self, pos):
         return np.sign(self.board[pos])
 
+    def validate_check(self, board, turn):
+        king = tuple(np.argwhere(board == Chess.KING * turn * -1)[0])
+        chesses = np.argwhere(np.sign(board) == turn)
+        for chess in chesses:
+            if self.validate(board, tuple(chess), king):
+                logger.debug("validate check from %s to %s", chess, king)
+                return True
+        return False
+
     def move(self, fpos, tpos):
-        if not self.validate(fpos, tpos):
+        if not self.validate(self.board, fpos, tpos):
             return False
+
+        board = copy.deepcopy(self.board)
+        board[tpos] = board[fpos]
+        board[fpos] = Chess.NONE
+        check = self.validate_check(board, self.turn * -1)
+        if check:
+            # from board import BoardFrame
+            # self.bf = BoardFrame()
+            # self.bf.board.setBoard(board, fpos, tpos)
+            # self.bf.show()
+            return self.MOVE_DEAD
 
         self.steps.append((copy.deepcopy(self.board), self.fpos, self.tpos, self.turn, self.idle, self.bout))
 
@@ -322,11 +342,15 @@ class Engine(threading.Thread):
         else:
             result = self.MOVE_IDLE
 
-        self.board[tpos] = self.board[fpos]
-        self.board[fpos] = Chess.NONE
         self.turn *= -1
         if self.turn == Chess.RED:
             self.bout += 1
+
+        self.board[tpos] = self.board[fpos]
+        self.board[fpos] = Chess.NONE
+        check = self.validate_check(self.board, self.turn * -1)
+        if check:
+            return self.MOVE_CHECK
 
         return result
 
@@ -357,8 +381,8 @@ class Engine(threading.Thread):
 
     def send_command(self, command):
         try:
-            logger.info(command)
-            line = f'{command}\n'.encode('utf8')
+            logger.info("COMMAND: %s", command)
+            line = f'{command}\n'.encode('gbk')
             self.stdin.write(line)
             self.stdin.flush()
         except IOError as e:
@@ -371,7 +395,7 @@ class Engine(threading.Thread):
                 line = self.stdout.readline().strip().decode('utf8')
                 if not line:
                     continue
-                logger.info(line)
+                logger.info("OUTPUT: %s", line)
                 return line
             except Exception as e:
                 logger.error(traceback.format_exc())
@@ -478,14 +502,11 @@ class UCCIEngine(Engine):
         if fen and not self.parse_fen(fen, moves):
             return
 
-        if self.turn == Chess.RED:
-            turn = 'w'
-        else:
-            turn = 'b'
+        mark = 'fen '
+        if self.fen == 'startpos':
+            mark = ''
 
-        fen = ' '.join([self.fen, turn, '-', '-', str(self.idle), str(self.bout)])
-
-        command = f'position {fen}'
+        command = f'position {mark}{self.fen}'
         if self.moves:
             command += f' moves {" ".join(self.moves)}'
 
@@ -517,6 +538,7 @@ class UCCIEngine(Engine):
            time=None, increment=None,
            opptime=None, oppmovetogo=None, oppincrement=None,
            draw=None, ponder=None):
+
         command = "go"
         if draw:
             command += ' draw'
@@ -625,7 +647,10 @@ class UCCIEngine(Engine):
                     move.type = self.MOVE_RESGIN
         elif instruct == 'nobestmove':
             self.running = False
-            move.type = self.MOVE_DEAD
+            if self.idle > 100:
+                move.type = self.MOVE_DRAW
+            else:
+                move.type = self.MOVE_DEAD
         else:
             logger.warning(instruct)
             return
@@ -639,13 +664,13 @@ class UCCIEngine(Engine):
             self.init_startpos()
             return
 
-        match = re.match(r'(?P<board>.+/{9}.+) (?P<turn>[w|b]) - - (?P<idle>\d+) (?P<bout>\d+)', fen)
+        match = re.match(r'(?P<board>.+/.+/.+/.+/.+/.+/.+/.+/.+/.+) (?P<turn>[w|b]) - - (?P<idle>\d+) (?P<bout>\d+)', fen)
 
         if not match:
             logger.warning('invalid fen %s', fen)
             return
 
-        self.fen = match.group('board')
+        self.fen = fen
         if not moves:
             moves = []
 
@@ -702,7 +727,9 @@ class UCCIEngine(Engine):
             line = ''.join(slot)
             lines.append(line)
 
-        items = ['/'.join(lines)]
+        result = '/'.join(lines)
+
+        items = [result]
         if self.turn == Chess.RED:
             items.append('w')
         else:
@@ -730,11 +757,12 @@ def main():
     ui = BoardFrame()
 
     def callback(move):
-        if move.type == Engine.MOVE_BEST:
+        if move.type in (Engine.MOVE_BEST, Engine.MOVE_CHECK):
             engine.move(move.fpos, move.tpos)
             ui.board.setBoard(engine.board, move.fpos, move.tpos)
 
             time.sleep(0.1)
+            # return
             if engine.turn == Chess.RED:
                 engine.go(depth=2)
             else:
