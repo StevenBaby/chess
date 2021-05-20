@@ -151,7 +151,9 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.difficulty.connect(self.change_difficulty)
         self.signal.difficulty.connect(self.show_difficulty)
 
-        self.delay = 0.7
+        self.signal.hint.emit(False)
+
+        self.delay = 0.4
         self.depth_computer = 1
         self.depth_hint = 7
 

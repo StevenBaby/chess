@@ -19,7 +19,7 @@ def play(audio_type):
         audio = AUDIO_CAPTURE
     elif audio_type == Engine.MOVE_IDLE:
         audio = AUDIO_MOVE
-    elif audio_type == Engine.MOVE_CHECK:
+    elif audio_type in (Engine.MOVE_CHECK, Engine.MOVE_DEAD):
         audio = AUDIO_CHECK
     else:
         return
