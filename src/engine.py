@@ -88,6 +88,7 @@ class Engine(threading.Thread):
 
     MOVE_IDLE = 4
     MOVE_CAPTURE = 5
+    MOVE_CHECK = 6
 
     ORIGIN = {
         (0, 0): Chess.BLACK * Chess.ROOK,
