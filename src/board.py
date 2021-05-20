@@ -14,7 +14,7 @@ from engine import logger
 from attrdict import attrdict
 
 
-class Singal(QtCore.QObject):
+class Signal(QtCore.QObject):
 
     refresh = QtCore.Signal(None)
 
@@ -79,7 +79,7 @@ class Board(QLabel):
         self.mark2.setScaledContents(True)
         self.mark2.setVisible(False)
 
-        self.signal = Singal()
+        self.signal = Signal()
         self.signal.refresh.connect(self.refresh)
 
         self.labels = mat(zeros((Chess.W, Chess.H,)), dtype=QtWidgets.QLabel)
@@ -153,6 +153,9 @@ class Board(QLabel):
         self.update()
 
     def mousePressEvent(self, event):
+        if event.buttons() != QtCore.Qt.LeftButton:
+            return super().mousePressEvent(event)
+
         pos = self.getPosition(event)
         if not pos:
             return
