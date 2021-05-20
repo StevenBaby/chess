@@ -166,9 +166,9 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
 
-        self.engine.fen = self.engine.format_fen()
-
-        logger.debug(self.engine.fen)
+        # self.engine.fen = self.engine.format_fen()
+        # self.engine.parse_fen('4k4/4C4/9/9/9/9/9/9/9/4K4 w - - 0 1')
+        # logger.debug(self.engine.fen)
 
         self.engine.start()
 

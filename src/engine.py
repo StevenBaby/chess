@@ -213,6 +213,17 @@ class Engine(threading.Thread):
         return True
 
     def validate_king(self, board, fpos, tpos, chess, color, offset):
+        # 老将见面
+        flag = True
+        if abs(board[fpos]) == abs(board[tpos]) == Chess.KING and offset[0] == 0:
+            for var in range(min(fpos[1], tpos[1]) + 1, max(fpos[1], tpos[1])):
+                pos = (fpos[0], var)
+                if board[pos]:
+                    flag = False
+                    break
+            if flag:
+                return True
+
         if tpos[0] < 3 or tpos[0] > 5:
             return False
         if color == Chess.BLACK and tpos[1] > 2:
