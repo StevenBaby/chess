@@ -37,7 +37,10 @@ class MainWindow(QtWidgets.QMainWindow):
         self.ui.undo.clicked.connect(self.undo)
 
         self.board.callback = self.board_callback
+
         self.engine = UCCIEngine(self.enginefile, callback=self.engine_callback)
+        self.engine2 = UCCIEngine(self.enginefile, callback=self.engine_callback)
+
         self.reset()
 
         pygame.mixer.init()
@@ -56,39 +59,60 @@ class MainWindow(QtWidgets.QMainWindow):
     def reset(self):
         if self.engine:
             self.engine.close()
+        if self.engine2:
+            self.engine2.close()
 
         self.fpos = None
 
         self.engine = UCCIEngine(self.enginefile, callback=self.engine_callback)
         self.engine.start()
+
+        self.engine2 = UCCIEngine(self.enginefile, callback=self.engine_callback)
+        self.engine2.start()
+
         self.updateBoard()
+
+        self.versus = True
+        self.depth_red = 3
+        self.depth_black = 3
+        self.engine_delay = 0.1
 
     def hint(self):
         self.ui.hint.setEnabled(False)
-        self.engine.go(depth=7)
+        if self.versus:
+            self.engine2.go(depth=self.depth_red)
+        else:
+            self.engine.go(depth=self.depth_red)
 
     def undo(self):
         for _ in range(2):
             if self.engine.steps:
                 self.engine.unmove()
+            if self.engine2.steps:
+                self.engine2.unmove()
         self.updateBoard()
 
     def updateBoard(self):
         self.board.setBoard(self.engine.board, self.engine.fpos, self.engine.tpos)
 
     def engine_callback(self, move):
-        time.sleep(0.5)
+        time.sleep(self.engine_delay)
         if move.type == Engine.MOVE_DEAD:
             pass
         if move.type != Engine.MOVE_BEST:
             return
         result = self.engine.move(move.fpos, move.tpos)
+
         self.updateBoard()
         self.ui.hint.setEnabled(True)
         self.play(result)
 
+        self.engine2.move(move.fpos, move.tpos)
+
         if self.engine.turn == Chess.BLACK:
-            self.engine.go()
+            self.engine.go(depth=self.depth_black)
+        elif self.versus:
+            self.engine2.go(depth=self.depth_red)
 
     def board_callback(self, pos):
         if self.engine.color(pos) == self.engine.turn:
@@ -103,8 +127,10 @@ class MainWindow(QtWidgets.QMainWindow):
         if not result:
             return
 
+        self.engine2.move(self.fpos, pos)
+
         self.updateBoard()
-        self.engine.go(depth=1)
+        self.engine.go(depth=self.depth_black)
         self.play(result)
 
     def resizeEvent(self, event):

@@ -733,9 +733,9 @@ def main():
             engine.move(move.fpos, move.tpos)
             ui.board.setBoard(engine.board, move.fpos, move.tpos)
 
-            time.sleep(1)
+            time.sleep(0.1)
             if engine.turn == Chess.RED:
-                engine.go(depth=7)
+                engine.go(depth=2)
             else:
                 engine.go(depth=3)
         elif move.type == Engine.MOVE_DEAD:
