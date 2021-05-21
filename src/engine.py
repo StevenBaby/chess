@@ -82,7 +82,9 @@ class Engine(threading.Thread):
         if not result:
             return result
 
-        self.stack.append(frame)
+        if result != Chess.CHECKWARN:
+            self.stack.append(frame)
+
         if result == Chess.CHECKMATE:
             self.checkmate = True
 

@@ -419,7 +419,7 @@ class Situation(Generator):
 
         check = self.is_check(board, self.turn)
         if check:
-            return Chess.CHECKMATE
+            return Chess.CHECKWARN
 
         if self.board[tpos]:
             self.idle = 0

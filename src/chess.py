@@ -89,5 +89,6 @@ class Chess(object):
     CAPTURE = 2
     DRAW = 3
     CHECK = 4
-    CHECKMATE = 5
-    RESIGN = 6
+    CHECKWARN = 5
+    CHECKMATE = 6
+    RESIGN = 7

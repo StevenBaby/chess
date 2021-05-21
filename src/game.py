@@ -197,7 +197,7 @@ class Game(BoardFrame, ContextMenuMixin):
                 self.engine.unmove()
                 if self.engine.sit.turn == Chess.RED:
                     break
-
+        self.signal.hint.emit(False)
         self.updateBoard()
 
     @QtCore.Slot(bool)
