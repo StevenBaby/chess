@@ -68,6 +68,7 @@ class Engine(threading.Thread):
 
         self.outlines = Queue()
         self.running = False
+        self.checkmate = False
 
         self.setup()
 
@@ -82,11 +83,15 @@ class Engine(threading.Thread):
             return result
 
         self.stack.append(frame)
+        if result == Chess.CHECKMATE:
+            self.checkmate = True
+
         return result
 
     def unmove(self):
         if not self.stack:
             return
+        self.checkmate = False
         self.sit = self.stack.pop()
         return True
 

@@ -168,7 +168,6 @@ class Game(BoardFrame, ContextMenuMixin):
         self.delay = 0.3
         self.depth_computer = 1
         self.depth_hint = 7
-        self.checkmate = False
 
         audio.init()
         self.reset()
@@ -196,7 +195,6 @@ class Game(BoardFrame, ContextMenuMixin):
         for _ in range(2):
             if self.engine.sit.moves:
                 self.engine.unmove()
-                self.checkmate = False
                 if self.engine.sit.turn == Chess.RED:
                     break
 
@@ -242,7 +240,6 @@ class Game(BoardFrame, ContextMenuMixin):
             for fpos, tpos in moves:
                 result = self.engine.move(fpos, tpos)
                 if result == Chess.CHECKMATE:
-                    self.checkmate = True
                     self.signal.checkmate.emit()
                     break
 
@@ -251,8 +248,8 @@ class Game(BoardFrame, ContextMenuMixin):
             QtWidgets.QMessageBox().warning(self, 'Warning', 'Load file failure!!!')
 
     def move(self, fpos, tpos):
-        if self.checkmate:
-            self.checkmateMessage()
+        if self.engine.checkmate:
+            self.signal.checkmate.emit()
             return
 
         result = self.engine.move(fpos, tpos)
@@ -264,7 +261,6 @@ class Game(BoardFrame, ContextMenuMixin):
         self.updateBoard()
 
         if result == Chess.CHECKMATE:
-            self.checkmate = True
             self.signal.checkmate.emit()
             return
 
@@ -280,7 +276,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
     @QtCore.Slot(None)
     def checkmateMessage(self):
-        if not self.checkmate:
+        if not self.engine.checkmate:
             return
         if self.engine.sit.turn == Chess.RED:
             QtWidgets.QMessageBox(self).warning(self, 'Info', 'Lose!!!')
