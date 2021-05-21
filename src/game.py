@@ -288,6 +288,8 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.hint.emit(False)
         if move_type == Chess.MOVE:
             self.move(fpos, tpos)
+        # if move_type == Chess.CHECKMATE:
+        #     self.signal.checkmate.emit()
 
     def board_callback(self, pos):
         if self.engine.sit.where_turn(pos) == self.engine.sit.turn:

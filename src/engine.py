@@ -362,6 +362,7 @@ class UCCIEngine(Engine):
                 move_type = Chess.DRAW
             else:
                 move_type = Chess.CHECKMATE
+                # self.checkmate = True
         else:
             logger.warning(instruct)
             return

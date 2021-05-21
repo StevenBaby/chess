@@ -90,7 +90,7 @@ class Generator(object):
                 continue
             if turn == Chess.RED and pos[1] < 7:  # 不能出宫
                 continue
-            if turn == Chess.BLACK and pos[1] > 3:  # 不能出宫
+            if turn == Chess.BLACK and pos[1] > 2:  # 不能出宫
                 continue
             result.append(tuple(pos))
 
@@ -225,14 +225,11 @@ class Generator(object):
             fpos = tuple(var)
             steps = self.generate(board, fpos, turn)
             for tpos in steps:
-                backup = (board[fpos], board[tpos])
-                board[tpos] = board[fpos]
-                board[fpos] = 0
+                tboard = copy.deepcopy(board)
+                tboard[tpos] = board[fpos]
+                tboard[fpos] = 0
 
-                check = self.is_check(board, turn)
-
-                board[tpos] = backup[1]
-                board[fpos] = backup[0]
+                check = self.is_check(tboard, turn)
                 if not check:
                     return False
         return True
@@ -420,7 +417,7 @@ class Situation(Generator):
         board[tpos] = board[fpos]
         board[fpos] = Chess.NONE
 
-        check = self.is_check(board, Chess.invert(self.turn))
+        check = self.is_check(board, self.turn)
         if check:
             return Chess.CHECKMATE
 
