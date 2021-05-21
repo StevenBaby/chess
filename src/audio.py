@@ -3,7 +3,7 @@
 import pygame
 
 from engine import dirpath
-from engine import Engine
+from chess import Chess
 
 AUDIO_MOVE = str(dirpath / 'audios/move.wav')
 AUDIO_CAPTURE = str(dirpath / 'audios/capture.wav')
@@ -15,11 +15,11 @@ def init():
 
 
 def play(audio_type):
-    if audio_type == Engine.MOVE_CAPTURE:
+    if audio_type == Chess.CAPTURE:
         audio = AUDIO_CAPTURE
-    elif audio_type == Engine.MOVE_IDLE:
+    elif audio_type == Chess.MOVE:
         audio = AUDIO_MOVE
-    elif audio_type in (Engine.MOVE_CHECK, Engine.MOVE_DEAD):
+    elif audio_type in (Chess.CHECK, Chess.CHECKMATE):
         audio = AUDIO_CHECK
     else:
         return

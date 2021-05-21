@@ -185,7 +185,7 @@ class Generator(object):
         if not board[where]:
             return []
 
-        chess = self.board[where] & 0b111
+        chess = self.board[where] & Chess.CMASK
         if chess == Chess.ROOK:
             return self.generate_rook(board, where, turn)
         if chess == Chess.KNIGHT:
@@ -298,12 +298,12 @@ class Situation(Generator):
     @staticmethod
     def format_move(fpos, tpos):
         var1 = chr(ord('a') + fpos[0])
-        var2 = 9 - fpos[1]
+        var2 = str(9 - fpos[1])
         var3 = chr(ord('a') + tpos[0])
-        var4 = 9 - tpos[1]
+        var4 = str(9 - tpos[1])
         return ''.join([var1, var2, var3, var4])
 
-    def parse_fen(self, fen):
+    def parse_fen(self, fen, load=False):
         if fen == 'startpos':
             self.__init__()
             return True
@@ -316,7 +316,7 @@ class Situation(Generator):
 
         self.board = np.mat(np.zeros((Chess.W, Chess.H)), dtype=int)
 
-        self.fen = fen
+        self.fen = f"{match.group(1)} {match.group(2)} - - {match.group(3)} {match.group(4)}"
 
         if match.group(2) == 'w':
             self.turn = Chess.RED
@@ -348,9 +348,12 @@ class Situation(Generator):
         for move in moves:
             fpos, tpos = self.parse_move(move)
             self.moves.append((fpos, tpos))
-            self.board[tpos] = self.board[fpos]
-            self.board[fpos] = 0
-            self.turn = Chess.invert(self.turn)
+            if not load:
+                self.board[tpos] = self.board[fpos]
+                self.board[fpos] = 0
+                self.turn = Chess.invert(self.turn)
+
+        logger.debug('parse turn %d idle %d bout %d', self.turn, self.idle, self.bout)
 
         return True
 
@@ -400,6 +403,51 @@ class Situation(Generator):
         moves = ' '.join(moves)
 
         return f'{self.fen} moves {moves}'
+
+    def where_turn(self, where):
+        return self.board[where] & Chess.TMASK
+
+    def validate_move(self, board, fpos, tpos):
+        if fpos == tpos:
+            return False
+        return tpos in self.generate(board, fpos, self.turn)
+
+    def move(self, fpos, tpos):
+        if not self.validate_move(self.board, fpos, tpos):
+            return False
+
+        board = copy.deepcopy(self.board)
+        board[tpos] = board[fpos]
+        board[fpos] = Chess.NONE
+
+        check = self.is_check(board, Chess.invert(self.turn))
+        if check:
+            return Chess.CHECKMATE
+
+        if self.board[tpos]:
+            self.idle = 0
+        else:
+            self.idle += 1
+
+        if self.board[tpos]:
+            result = Chess.CAPTURE
+        else:
+            result = Chess.MOVE
+
+        self.turn = Chess.invert(self.turn)
+        if self.turn == Chess.RED:
+            self.bout += 1
+
+        self.board[tpos] = self.board[fpos]
+        self.board[fpos] = Chess.NONE
+        self.moves.append((fpos, tpos))
+
+        if self.is_checkmate(self.board, self.turn):
+            logger.warning("Checkmate ......")
+            return Chess.CHECKMATE
+        if self.is_check(self.board, self.turn):
+            return Chess.CHECK
+        return result
 
 
 def main():

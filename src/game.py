@@ -24,9 +24,13 @@ class GameSignal(QtCore.QObject):
     undo = QtCore.Signal(None)
     reset = QtCore.Signal(None)
     debug = QtCore.Signal(None)
-    move = QtCore.Signal(int)
 
+    load = QtCore.Signal(None)
+    save = QtCore.Signal(None)
+
+    move = QtCore.Signal(int)
     difficulty = QtCore.Signal(int)
+    checkmate = QtCore.Signal(None)
 
 
 class ContextMenuMixin(QtWidgets.QWidget):
@@ -39,6 +43,9 @@ class ContextMenuMixin(QtWidgets.QWidget):
         ['重置', 'Ctrl+N', lambda self: self.signal.reset.emit()],
         'separator',
         ['调试', 'Ctrl+D', lambda self: self.signal.debug.emit()],
+        'separator',
+        ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
+        ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
         'separator',
     ]
 
@@ -147,15 +154,21 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.reset.connect(self.reset)
         self.signal.debug.connect(self.debug)
 
+        self.signal.load.connect(self.load)
+        self.signal.save.connect(self.save)
+
         self.signal.move.connect(self.audioPlay)
         self.signal.difficulty.connect(self.change_difficulty)
         self.signal.difficulty.connect(self.show_difficulty)
 
+        self.signal.checkmate.connect(self.checkmateMessage)
+
         self.signal.hint.emit(False)
 
-        self.delay = 0.4
+        self.delay = 0.3
         self.depth_computer = 1
         self.depth_hint = 7
+        self.checkmate = False
 
         audio.init()
         self.reset()
@@ -181,9 +194,10 @@ class Game(BoardFrame, ContextMenuMixin):
     def undo(self):
         logger.debug("undo called....")
         for _ in range(2):
-            if self.engine.steps:
+            if self.engine.sit.moves:
                 self.engine.unmove()
-                if self.engine.turn == Chess.RED:
+                self.checkmate = False
+                if self.engine.sit.turn == Chess.RED:
                     break
 
         self.updateBoard()
@@ -196,21 +210,65 @@ class Game(BoardFrame, ContextMenuMixin):
     @QtCore.Slot(None)
     def debug(self):
         logger.debug("debug slot.....")
-        logger.debug(self.engine.format_fen())
+        logger.debug(self.engine.sit.format_fen())
+
+    @QtCore.Slot(None)
+    def save(self):
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        filename = dialog.getSaveFileName(
+            self, "Open Chinese Fen", ".", "Fen Files (*.fen)")[0]
+        if not filename:
+            return
+        fen = self.engine.sit.format_fen()
+        with open(filename, 'w') as file:
+            file.write(fen)
+        logger.info("save file %s - fen %s", filename, fen)
+
+    @QtCore.Slot(None)
+    def load(self):
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        filename = dialog.getOpenFileName(
+            self, "Open Chinese Fen", ".", "Fen Files (*.fen)")[0]
+        if not filename:
+            return
+        with open(filename, 'r') as file:
+            fen = file.read()
+
+        if self.engine.sit.parse_fen(fen, load=True):
+            moves = self.engine.sit.moves
+            self.engine.sit.moves = []
+            for fpos, tpos in moves:
+                result = self.engine.move(fpos, tpos)
+                if result == Chess.CHECKMATE:
+                    self.checkmate = True
+                    self.signal.checkmate.emit()
+                    break
+
+            self.updateBoard()
+        else:
+            QtWidgets.QMessageBox().warning(self, 'Warning', 'Load file failure!!!')
 
     def move(self, fpos, tpos):
+        if self.checkmate:
+            self.checkmateMessage()
+            return
+
         result = self.engine.move(fpos, tpos)
         if not result:
             return
 
-        logger.debug('move result %d turn %d', result, self.engine.turn)
+        logger.debug('move result %d turn %d', result, self.engine.sit.turn)
         self.signal.move.emit(result)
-
         self.updateBoard()
-        if result == Engine.MOVE_DEAD:
+
+        if result == Chess.CHECKMATE:
+            self.checkmate = True
+            self.signal.checkmate.emit()
             return
 
-        if self.engine.turn == Chess.BLACK:
+        if self.engine.sit.turn == Chess.BLACK:
             self.engine.go(depth=self.depth_computer)
 
     @QtCore.Slot(int)
@@ -218,18 +276,27 @@ class Game(BoardFrame, ContextMenuMixin):
         self.depth_computer = diff
 
     def updateBoard(self):
-        self.board.setBoard(self.engine.board, self.engine.fpos, self.engine.tpos)
+        self.board.setBoard(self.engine.sit.board, self.engine.sit.fpos, self.engine.sit.tpos)
 
-    def engine_callback(self, move):
+    @QtCore.Slot(None)
+    def checkmateMessage(self):
+        if not self.checkmate:
+            return
+        if self.engine.sit.turn == Chess.RED:
+            QtWidgets.QMessageBox(self).warning(self, 'Info', 'Lose!!!')
+        else:
+            QtWidgets.QMessageBox(self).information(self, 'Info', 'Victory!!!')
+
+    def engine_callback(self, move_type, fpos, tpos):
         time.sleep(self.delay)
         self.signal.hint.emit(False)
-        if move.type == Engine.MOVE_BEST:
-            self.move(move.fpos, move.tpos)
+        if move_type == Chess.MOVE:
+            self.move(fpos, tpos)
 
     def board_callback(self, pos):
-        if self.engine.color(pos) == self.engine.turn:
+        if self.engine.sit.where_turn(pos) == self.engine.sit.turn:
             self.fpos = pos
-            self.board.setBoard(self.engine.board, self.fpos)
+            self.board.setBoard(self.engine.sit.board, self.fpos)
             return
 
         if not self.fpos:

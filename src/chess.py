@@ -1,15 +1,22 @@
 # coding=utf-8
+from pathlib import Path
+
 import numpy as np
 
 from logger import logger
 
+dirpath = Path(__file__).parent
+
 
 class Chess(object):
 
+    NONE = 0
     RMASK = 16
     BMASK = 32
     RED = RMASK
     BLACK = BMASK
+    TMASK = 0b110000
+    CMASK = 0b111  # 7
 
     PAWN = 1
     ROOK = 2
@@ -78,9 +85,9 @@ class Chess(object):
         )
     )
 
-    MOVE = 0
-    CAPTURE = 1
-    DRAW = 2
-    CHECK = 3
-    CHECKMATE = 4
-    RESIGN = 5
+    MOVE = 1
+    CAPTURE = 2
+    DRAW = 3
+    CHECK = 4
+    CHECKMATE = 5
+    RESIGN = 6

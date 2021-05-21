@@ -7,9 +7,9 @@ import numpy as np
 from numpy import mat
 from numpy import zeros
 
-from engine import dirpath
-from engine import Chess
-from engine import logger
+from chess import dirpath
+from chess import Chess
+from logger import logger
 
 from attrdict import attrdict
 
@@ -26,24 +26,20 @@ class Board(QLabel):
     FAVICON = str(dirpath / u"images/favicon.ico")
 
     IMAGES = {
-        Chess.RED: {
-            Chess.ROOK: str(dirpath / 'images/red_rook.png'),
-            Chess.KNIGHT: str(dirpath / 'images/red_knight.png'),
-            Chess.BISHOP: str(dirpath / 'images/red_bishop.png'),
-            Chess.ADVISOR: str(dirpath / 'images/red_advisor.png'),
-            Chess.KING: str(dirpath / 'images/red_king.png'),
-            Chess.CANNON: str(dirpath / 'images/red_cannon.png'),
-            Chess.PAWN: str(dirpath / 'images/red_pawn.png'),
-        },
-        Chess.BLACK: {
-            Chess.ROOK: str(dirpath / 'images/black_rook.png'),
-            Chess.KNIGHT: str(dirpath / 'images/black_knight.png'),
-            Chess.BISHOP: str(dirpath / 'images/black_bishop.png'),
-            Chess.ADVISOR: str(dirpath / 'images/black_advisor.png'),
-            Chess.KING: str(dirpath / 'images/black_king.png'),
-            Chess.CANNON: str(dirpath / 'images/black_cannon.png'),
-            Chess.PAWN: str(dirpath / 'images/black_pawn.png'),
-        }
+        Chess.R: str(dirpath / 'images/red_rook.png'),
+        Chess.N: str(dirpath / 'images/red_knight.png'),
+        Chess.B: str(dirpath / 'images/red_bishop.png'),
+        Chess.A: str(dirpath / 'images/red_advisor.png'),
+        Chess.K: str(dirpath / 'images/red_king.png'),
+        Chess.C: str(dirpath / 'images/red_cannon.png'),
+        Chess.P: str(dirpath / 'images/red_pawn.png'),
+        Chess.r: str(dirpath / 'images/black_rook.png'),
+        Chess.n: str(dirpath / 'images/black_knight.png'),
+        Chess.b: str(dirpath / 'images/black_bishop.png'),
+        Chess.a: str(dirpath / 'images/black_advisor.png'),
+        Chess.k: str(dirpath / 'images/black_king.png'),
+        Chess.c: str(dirpath / 'images/black_cannon.png'),
+        Chess.p: str(dirpath / 'images/black_pawn.png'),
     }
 
     flags = QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint
@@ -64,9 +60,8 @@ class Board(QLabel):
 
         self.resize(self.csize * Chess.W, self.csize * Chess.H)
 
-        for _, paths in self.IMAGES.items():
-            for chess, path in paths.items():
-                paths[chess] = QPixmap(path)
+        for chess, path in self.IMAGES.items():
+            self.IMAGES[chess] = QPixmap(path)
 
         mark = QPixmap(self.MARK)
         self.mark1 = QLabel(self)
@@ -177,10 +172,7 @@ class Board(QLabel):
             label.setVisible(False)
             return
 
-        cside = 1 if chess > 0 else -1
-        ctype = abs(chess)
-
-        image = self.IMAGES[cside][ctype]
+        image = self.IMAGES[chess]
         label.setPixmap(image)
         label.setScaledContents(True)
         label.setGeometry(self.getChessGeometry(pos))
