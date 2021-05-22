@@ -229,7 +229,7 @@ class Game(BoardFrame, ContextMenuMixin):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
         filename = dialog.getSaveFileName(
-            self, "Open Chinese Fen", ".", "Fen Files (*.fen)")[0]
+            self, "保存中国象棋文件 Fen", ".", "文件 (*.fen)")[0]
         if not filename:
             return
         fen = self.engine.sit.format_fen()
@@ -242,7 +242,7 @@ class Game(BoardFrame, ContextMenuMixin):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
         filename = dialog.getOpenFileName(
-            self, "Open Chinese Fen", ".", "Fen Files (*.fen)")[0]
+            self, "打开中国象棋文件 Fen", ".", "文件 (*.fen)")[0]
         if not filename:
             return
         with open(filename, 'r') as file:
@@ -306,9 +306,9 @@ class Game(BoardFrame, ContextMenuMixin):
         if not self.engine.checkmate:
             return
         if self.engine.sit.turn == Chess.RED:
-            QtWidgets.QMessageBox(self).warning(self, 'Info', 'Lose!!!')
+            QtWidgets.QMessageBox(self).warning(self, '信息', '黑方胜!!!')
         else:
-            QtWidgets.QMessageBox(self).information(self, 'Info', 'Victory!!!')
+            QtWidgets.QMessageBox(self).information(self, '信息', '红方胜!!!')
 
     def engine_callback(self, move_type, fpos, tpos):
         time.sleep(self.delay)

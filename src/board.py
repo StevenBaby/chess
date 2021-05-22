@@ -240,7 +240,7 @@ class BoardFrame(QtWidgets.QFrame):
         self.board = Board(self)
         if parent is None:
             self.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
-            self.setWindowTitle(u"Chinese Chess")
+            self.setWindowTitle(u"中国象棋")
         self.resize(self.board.size())
 
     def resizeEvent(self, event):
