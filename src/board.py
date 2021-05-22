@@ -42,6 +42,8 @@ class Board(QLabel):
         Chess.p: str(dirpath / 'images/black_pawn.png'),
     }
 
+    ANIMATION_DURATION = 200
+
     flags = QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint
 
     def __init__(self, parent=None, callback=None):
@@ -93,11 +95,25 @@ class Board(QLabel):
         self.tpos = tpos
         self.signal.refresh.emit()
 
+    def move(self, board, fpos, tpos, callback=None):
+        label = self.getLabel(fpos)
+        if not label:
+            return
+
+        label.setVisible(True)
+        label.raise_()  # 将空间提到前面
+        ani = QtCore.QPropertyAnimation(label, b'geometry', self)
+        ani.setTargetObject(label)
+        ani.setDuration(self.ANIMATION_DURATION)
+        ani.setStartValue(QtCore.QRect(self.getChessGeometry(fpos)))
+        ani.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
+        ani.start()
+
+        if callable(callback):
+            QtCore.QTimer.singleShot(self.ANIMATION_DURATION, callback)
+
     @QtCore.Slot()
     def refresh(self):
-        self.update()
-
-    def update(self):
         self.setPixmap(self.board_image)
         for x in range(Chess.W):
             for y in range(Chess.H):
@@ -160,6 +176,14 @@ class Board(QLabel):
     def clickPosition(self, pos):
         if callable(self.callback):
             self.callback(pos)
+
+    def getLabel(self, pos):
+        if not pos:
+            return None
+        label = self.labels[tuple(pos)]
+        if not label:
+            return None
+        return label
 
     def setChess(self, pos, chess):
         label = self.labels[pos]

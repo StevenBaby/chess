@@ -31,6 +31,7 @@ class GameSignal(QtCore.QObject):
     move = QtCore.Signal(int)
     difficulty = QtCore.Signal(int)
     checkmate = QtCore.Signal(None)
+    animate = QtCore.Signal(tuple, tuple)
 
 
 class ContextMenuMixin(QtWidgets.QWidget):
@@ -163,6 +164,8 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.signal.checkmate.connect(self.checkmateMessage)
 
+        self.signal.animate.connect(self.animate)
+
         self.signal.hint.emit(False)
 
         self.delay = 0.3
@@ -177,11 +180,6 @@ class Game(BoardFrame, ContextMenuMixin):
             self.engine.close()
 
         self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
-
-        # self.engine.fen = self.engine.format_fen()
-        # self.engine.parse_fen('4k4/4C4/9/9/9/9/9/9/9/4K4 w - - 0 1')
-        # logger.debug(self.engine.fen)
-
         self.engine.start()
 
         self.fpos = None
@@ -247,6 +245,10 @@ class Game(BoardFrame, ContextMenuMixin):
         else:
             QtWidgets.QMessageBox().warning(self, 'Warning', 'Load file failure!!!')
 
+    @QtCore.Slot(tuple, tuple)
+    def animate(self, fpos, tpos):
+        self.board.move(self.engine.sit.board, fpos, tpos, self.updateBoard)
+
     def move(self, fpos, tpos):
         if self.engine.checkmate:
             self.signal.checkmate.emit()
@@ -256,9 +258,8 @@ class Game(BoardFrame, ContextMenuMixin):
         if not result:
             return
 
-        logger.debug('move result %d turn %d', result, self.engine.sit.turn)
+        self.signal.animate.emit(fpos, tpos)
         self.signal.move.emit(result)
-        self.updateBoard()
 
         if result == Chess.CHECKMATE:
             self.signal.checkmate.emit()
