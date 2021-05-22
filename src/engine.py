@@ -55,6 +55,7 @@ class Engine(threading.Thread):
 
     def __init__(self, filename: Path):
         super().__init__(daemon=True)
+        self.name = 'EngineThread'
 
         self.filename = Path(filename)
         self.dirname = str(filename.parent)
@@ -64,7 +65,11 @@ class Engine(threading.Thread):
         self.sit = Situation()
         self.stack = [self.sit]
 
-        self.parser_thread = threading.Thread(target=self.parser, daemon=True)
+        self.parser_thread = threading.Thread(
+            target=self.parser,
+            daemon=True,
+            name="ParserThread"
+        )
 
         self.outlines = Queue()
         self.running = False
@@ -75,8 +80,11 @@ class Engine(threading.Thread):
         self.setup()
 
     def close(self):
+        self.running = False
         if self.pipe:
             self.pipe.terminate()
+        self.parser_thread.join()
+        self.join()
 
     def move(self, fpos, tpos):
         logger.debug('start move stack %s index %s', self.stack, self.index)
@@ -150,7 +158,8 @@ class Engine(threading.Thread):
             self.outlines.put(line)
 
     def parser(self):
-        while True:
+        self.running = True
+        while self.running:
             line = self.outlines.get()
             try:
                 self.parse_line(line)
@@ -172,7 +181,7 @@ class Engine(threading.Thread):
             try:
                 line = self.stdout.readline().strip().decode('utf8')
                 if not line:
-                    continue
+                    return ""
                 logger.info("OUTPUT: %s", line)
                 return line
             except Exception as e:
@@ -222,8 +231,10 @@ class UCCIEngine(Engine):
         super().setup()
         self.send_command('ucci')
 
-        while True:
+        while self.running:
             line = self.readline()
+            if not line:
+                continue
             try:
                 self.parse_line(line)
             except Exception:
@@ -355,6 +366,8 @@ class UCCIEngine(Engine):
 
     def parse_line(self, line: str):
         items = line.split(maxsplit=1)
+        if not items:
+            return
         instruct = items[0]
         if instruct == 'bye':
             self.running = False
