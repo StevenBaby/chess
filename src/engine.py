@@ -104,6 +104,8 @@ class Engine(threading.Thread):
             self.stack.append(sit)
             self.sit = sit
             self.index += 1
+        else:
+            self.sit.check = sit.check
 
         if result == Chess.CHECKMATE:
             self.checkmate = True
