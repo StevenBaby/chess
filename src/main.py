@@ -191,6 +191,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.signal.difficulty.emit(self.depth_computer)
         self.updateBoard()
+        self.board.setCheck(None)
 
     @QtCore.Slot(None)
     def undo(self):
@@ -286,6 +287,7 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.move.emit(result)
 
         if result == Chess.CHECKMATE:
+            logger.debug("emit checkmate")
             self.signal.checkmate.emit()
             return
 

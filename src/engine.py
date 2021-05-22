@@ -85,6 +85,9 @@ class Engine(threading.Thread):
             logger.debug("forward hint %s", self.sit.format_move(fpos, tpos))
             self.sit = self.stack[nidx]
             self.index = nidx
+            result = self.sit.result
+            if result == Chess.CHECKMATE:
+                self.checkmate = True
             return self.sit.result
         else:
             self.stack = self.stack[:self.index + 1]
@@ -104,7 +107,6 @@ class Engine(threading.Thread):
 
         if result == Chess.CHECKMATE:
             self.checkmate = True
-            self.sit.is_checkmate()
 
         logger.debug('finish move stack %s index %s', self.stack, self.index)
 

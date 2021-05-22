@@ -43,7 +43,7 @@ class Board(QLabel):
         Chess.p: str(dirpath / 'images/black_pawn.png'),
     }
 
-    ANIMATION_DURATION = 200
+    ANIMATION_DURATION = 280
 
     flags = QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint
 
@@ -113,7 +113,7 @@ class Board(QLabel):
             return
 
         label.setVisible(True)
-        label.raise_()  # 将空间提到前面
+        label.raise_()  # 将控件提到前面
         ani = QtCore.QPropertyAnimation(label, b'geometry', self)
         ani.setTargetObject(label)
         ani.setDuration(self.ANIMATION_DURATION)
