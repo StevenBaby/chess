@@ -23,6 +23,7 @@ class Board(QLabel):
 
     BOARD = str(dirpath / u"images/board.png")
     MARK = str(dirpath / u"images/mark.png")
+    CHECK = str(dirpath / u"images/check.png")
     FAVICON = str(dirpath / u"images/favicon.ico")
 
     IMAGES = {
@@ -76,6 +77,12 @@ class Board(QLabel):
         self.mark2.setScaledContents(True)
         self.mark2.setVisible(False)
 
+        check = QPixmap(self.CHECK)
+        self.mark3 = QLabel(self)
+        self.mark3.setPixmap(check)
+        self.mark3.setScaledContents(True)
+        self.mark3.setVisible(False)
+
         self.signal = Signal()
         self.signal.refresh.connect(self.refresh)
 
@@ -84,6 +91,7 @@ class Board(QLabel):
 
         self.fpos = None
         self.tpos = None
+        self.check = None
 
         self.update()
 
@@ -93,6 +101,10 @@ class Board(QLabel):
         self.board = board
         self.fpos = fpos
         self.tpos = tpos
+        self.signal.refresh.emit()
+
+    def setCheck(self, check):
+        self.check = check
         self.signal.refresh.emit()
 
     def move(self, board, fpos, tpos, callback=None):
@@ -131,6 +143,13 @@ class Board(QLabel):
             self.mark2.setVisible(True)
         else:
             self.mark2.setVisible(False)
+
+        if self.check:
+            self.mark3.setGeometry(self.getChessGeometry(self.check))
+            self.mark3.setVisible(True)
+        else:
+            self.mark3.setVisible(False)
+
         super().update()
 
     def resizeEvent(self, event):
@@ -153,15 +172,7 @@ class Board(QLabel):
 
         self.csize = width // Chess.W
 
-        for w in range(Chess.W):
-            for h in range(Chess.H):
-                pos = (w, h)
-                label = self.labels[pos]
-                if not label:
-                    continue
-                label.setGeometry(self.getChessGeometry(label.pos))
-
-        self.update()
+        self.refresh()
 
     def mousePressEvent(self, event):
         if event.buttons() != QtCore.Qt.LeftButton:

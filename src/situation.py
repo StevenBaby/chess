@@ -203,11 +203,11 @@ class Generator(object):
 
         return []
 
-    def is_check(self, board, turn):
+    def get_check(self, board, turn):
         king = turn | Chess.KING
         king = list(np.argwhere(board == (Chess.KING | turn)))
         if not king:
-            return False
+            return None
         king = tuple(king[0])
 
         chesses = np.argwhere((board & Chess.invert(turn)) != 0)
@@ -216,8 +216,8 @@ class Generator(object):
             steps = self.generate(board, tuple(chess), Chess.invert(self.turn))
             valid = [var for var in steps if var == king]
             if valid:
-                return True
-        return False
+                return tuple(chess)
+        return None
 
     def is_checkmate(self, board, turn):
         chesses = np.argwhere((board & turn) != 0)
@@ -229,7 +229,7 @@ class Generator(object):
                 tboard[tpos] = board[fpos]
                 tboard[fpos] = 0
 
-                check = self.is_check(tboard, turn)
+                check = self.get_check(tboard, turn)
                 if not check:
                     return False
         return True
@@ -250,6 +250,7 @@ class Situation(Generator):
         self.bout = bout
         self.idle = idle
         self.result = False
+        self.check = None
         self.fen = self.format_current_fen()
 
     @property
@@ -418,9 +419,12 @@ class Situation(Generator):
         board[tpos] = board[fpos]
         board[fpos] = Chess.NONE
 
-        check = self.is_check(board, self.turn)
+        check = self.get_check(board, self.turn)
         if check:
+            self.check = check
             return Chess.INVALID
+
+        self.check = None
 
         if self.board[tpos]:
             self.idle = 0
@@ -443,7 +447,9 @@ class Situation(Generator):
         if self.is_checkmate(self.board, self.turn):
             logger.warning("Checkmate ......")
             return Chess.CHECKMATE
-        if self.is_check(self.board, self.turn):
+        check = self.get_check(self.board, self.turn)
+        if check:
+            self.check = check
             return Chess.CHECK
         return result
 
@@ -470,7 +476,7 @@ def main():
     logger.debug(sit.fen)
     # logger.debug(sit.moves)
     # sit.print()
-    logger.debug(sit.is_check(sit.board, Chess.RED))
+    logger.debug(sit.get_check(sit.board, Chess.RED))
     logger.debug(sit.is_checkmate(sit.board, Chess.RED))
     # logger.debug(sit.generate(sit.board, (0, 0), Chess.BLACK))
     # logger.debug(sit.generate(sit.board, (1, 0), Chess.BLACK))

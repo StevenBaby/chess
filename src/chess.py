@@ -92,3 +92,4 @@ class Chess(object):
     INVALID = 5
     CHECKMATE = 6
     RESIGN = 7
+    NEWGAME = 8

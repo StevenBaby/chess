@@ -104,6 +104,7 @@ class Engine(threading.Thread):
 
         if result == Chess.CHECKMATE:
             self.checkmate = True
+            self.sit.is_checkmate()
 
         logger.debug('finish move stack %s index %s', self.stack, self.index)
 

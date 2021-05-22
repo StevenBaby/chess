@@ -187,6 +187,8 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.fpos = None
 
+        self.signal.move.emit(Chess.NEWGAME)
+
         self.signal.difficulty.emit(self.depth_computer)
         self.updateBoard()
 
@@ -203,6 +205,8 @@ class Game(BoardFrame, ContextMenuMixin):
     def redo(self):
         for _ in range(2):
             self.engine.redo()
+            logger.debug('engine redo result %d', self.engine.sit.result)
+            self.signal.move.emit(self.engine.sit.result)
             if self.engine.sit.turn == Chess.RED:
                 break
 
@@ -266,10 +270,19 @@ class Game(BoardFrame, ContextMenuMixin):
             return
 
         result = self.engine.move(fpos, tpos)
+        logger.debug('move result %s', result)
         if not result:
             return
 
-        self.signal.animate.emit(fpos, tpos)
+        if result != Chess.INVALID:
+            self.signal.animate.emit(fpos, tpos)
+
+        if self.engine.sit.check:
+            self.board.setCheck(self.engine.sit.check)
+            logger.debug('invalid ... %s', self.engine.sit.check)
+        else:
+            self.board.setCheck(None)
+
         self.signal.move.emit(result)
 
         if result == Chess.CHECKMATE:
