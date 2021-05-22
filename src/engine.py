@@ -62,13 +62,15 @@ class Engine(threading.Thread):
         self.state = self.ENGINE_BOOT
 
         self.sit = Situation()
-        self.stack = []
+        self.stack = [self.sit]
 
         self.parser_thread = threading.Thread(target=self.parser, daemon=True)
 
         self.outlines = Queue()
         self.running = False
         self.checkmate = False
+
+        self.index = 0
 
         self.setup()
 
@@ -77,24 +79,58 @@ class Engine(threading.Thread):
             self.pipe.terminate()
 
     def move(self, fpos, tpos):
-        frame = copy.deepcopy(self.sit)
-        result = self.sit.move(fpos, tpos)
+        logger.debug('start move stack %s index %s', self.stack, self.index)
+        nidx = self.index + 1
+        if nidx < len(self.stack) and (self.stack[nidx].fpos, self.stack[nidx].tpos) == (fpos, tpos):
+            logger.debug("forward hint %s", self.sit.format_move(fpos, tpos))
+            self.sit = self.stack[nidx]
+            self.index = nidx
+            return self.sit.result
+        else:
+            self.stack = self.stack[:self.index + 1]
+
+        sit = copy.deepcopy(self.sit)
+
+        result = sit.move(fpos, tpos)
+        sit.result = result
+
         if not result:
             return result
 
-        if result != Chess.CHECKWARN:
-            self.stack.append(frame)
+        if result != Chess.INVALID:
+            self.stack.append(sit)
+            self.sit = sit
+            self.index += 1
 
         if result == Chess.CHECKMATE:
             self.checkmate = True
 
+        logger.debug('finish move stack %s index %s', self.stack, self.index)
+
         return result
 
-    def unmove(self):
-        if not self.stack:
-            return
+    def undo(self):
+        logger.debug('start undo stack %s index %s', self.stack, self.index)
+        if self.index == 0:
+            return False
+
         self.checkmate = False
-        self.sit = self.stack.pop()
+        self.index -= 1
+
+        self.sit = self.stack[self.index]
+
+        logger.debug(self.sit)
+        logger.debug('finish undo stack %s index %s', self.stack, self.index)
+
+        return True
+
+    def redo(self):
+        nidx = self.index + 1
+        if nidx >= len(self.stack):
+            return False
+
+        self.index += 1
+        self.sit = self.stack[self.index]
         return True
 
     def parse_line(self, line: str):
@@ -244,8 +280,8 @@ class UCCIEngine(Engine):
         self.position()
         return result
 
-    def unmove(self):
-        if super().unmove():
+    def undo(self):
+        if super().undo():
             self.position()
             return True
 
@@ -397,10 +433,9 @@ def main():
 
         elif move_type == Chess.CHECKMATE:
             return
-            while engine.unmove():
+            while engine.undo():
                 ui.board.setBoard(engine.board, engine.fpos, engine.tpos)
                 time.sleep(0.01)
-            # engine.unmove()
 
     engine.callback = callback
     engine.clear()

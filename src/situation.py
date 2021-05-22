@@ -249,6 +249,7 @@ class Situation(Generator):
             self.moves = []
         self.bout = bout
         self.idle = idle
+        self.result = False
         self.fen = self.format_current_fen()
 
     @property
@@ -419,7 +420,7 @@ class Situation(Generator):
 
         check = self.is_check(board, self.turn)
         if check:
-            return Chess.CHECKWARN
+            return Chess.INVALID
 
         if self.board[tpos]:
             self.idle = 0
@@ -445,6 +446,11 @@ class Situation(Generator):
         if self.is_check(self.board, self.turn):
             return Chess.CHECK
         return result
+
+    def __repr__(self):
+        if not self.fpos:
+            return 'startpos'
+        return self.format_move(self.fpos, self.tpos)
 
 
 def main():

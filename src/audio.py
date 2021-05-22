@@ -19,7 +19,7 @@ def play(audio_type):
         audio = AUDIO_CAPTURE
     elif audio_type == Chess.MOVE:
         audio = AUDIO_MOVE
-    elif audio_type in (Chess.CHECK, Chess.CHECKMATE, Chess.CHECKWARN):
+    elif audio_type in (Chess.CHECK, Chess.CHECKMATE, Chess.INVALID):
         audio = AUDIO_CHECK
     else:
         return
