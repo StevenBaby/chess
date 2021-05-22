@@ -109,7 +109,7 @@ class Generator(object):
                 continue
             if turn == Chess.RED and pos[1] < 7:  # 不能出宫
                 continue
-            if turn == Chess.BLACK and pos[1] > 3:  # 不能出宫
+            if turn == Chess.BLACK and pos[1] > 2:  # 不能出宫
                 continue
             result.append(tuple(pos))
 
