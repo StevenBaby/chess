@@ -4,9 +4,9 @@ import sys
 import time
 from functools import partial
 
-from PySide6 import QtWidgets
-from PySide6 import QtCore
-from PySide6 import QtGui
+from PySide2 import QtWidgets
+from PySide2 import QtCore
+from PySide2 import QtGui
 
 from board import BoardFrame
 from engine import Engine
@@ -16,6 +16,7 @@ from engine import dirpath
 from engine import logger
 
 import audio
+import system
 
 
 class GameSignal(QtCore.QObject):
@@ -33,6 +34,7 @@ class GameSignal(QtCore.QObject):
     difficulty = QtCore.Signal(int)
     checkmate = QtCore.Signal(None)
     animate = QtCore.Signal(tuple, tuple)
+    settings = QtCore.Signal(None)
 
 
 class ContextMenuMixin(QtWidgets.QWidget):
@@ -45,12 +47,19 @@ class ContextMenuMixin(QtWidgets.QWidget):
         ['重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit()],
         ['重置', 'Ctrl+N', lambda self: self.signal.reset.emit()],
         'separator',
-        ['调试', 'Ctrl+D', lambda self: self.signal.debug.emit()],
-        'separator',
         ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
         ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
         'separator',
+        # ['设置', '', lambda self: self.signal.settings.emit()],
     ]
+
+    if system.DEBUG:
+        items.extend(
+            [
+                ['调试', 'Ctrl+D', lambda self: self.signal.debug.emit()],
+                'separator',
+            ]
+        )
 
     def __init__(self, parent=None):
         if not hasattr(self, 'signal'):
@@ -66,7 +75,9 @@ class ContextMenuMixin(QtWidgets.QWidget):
         for item in self.items:
             if isinstance(item, list) and len(item) == 3:
                 name, key, slot = item
-                shortcut = QtGui.QShortcut(QtGui.QKeySequence(key), self)
+                if not key:
+                    continue
+                shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key), self)
                 shortcut.activated.connect(partial(slot, self))
                 self.shortcuts.append(shortcut)
 
@@ -80,7 +91,7 @@ class ContextMenuMixin(QtWidgets.QWidget):
         for item in self.items:
             if isinstance(item, list) and len(item) == 3:
                 name, key, slot = item
-                action = QtGui.QAction(name, self)
+                action = QtWidgets.QAction(name, self)
                 action.setFont(self.font_families)
                 action.setShortcut(key)
                 action.triggered.connect(partial(slot, self))
@@ -99,7 +110,7 @@ class ContextMenuMixin(QtWidgets.QWidget):
 
         for diff in range(self.max_difficulty):
             difficulty = diff + 1
-            action = QtGui.QAction(str(difficulty), self)
+            action = QtWidgets.QAction(str(difficulty), self)
             action.setFont(self.font_families)
             action.setCheckable(True)
             self.difficulty_menu.addAction(action)

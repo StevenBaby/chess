@@ -14,9 +14,12 @@ import copy
 
 from attrdict import attrdict
 from logger import logger
-from chess import dirpath
 from chess import Chess
 from situation import Situation
+
+import system
+
+dirpath = system.get_dirpath()
 
 
 class Queue(queue.Queue):
@@ -432,7 +435,7 @@ def main():
     engine = UCCIEngine(filename)
     engine.start()
 
-    from PySide6 import QtCore, QtWidgets, QtGui
+    from PySide2 import QtCore, QtWidgets, QtGui
     from board import BoardFrame
     app = QtWidgets.QApplication(sys.argv)
     ui = BoardFrame()

@@ -1,17 +1,23 @@
 
-from PySide6 import QtCore, QtWidgets, QtGui
-from PySide6.QtWidgets import QLabel
-from PySide6.QtGui import QPixmap
+import os
+import ctypes
+
+from PySide2 import QtCore, QtWidgets, QtGui
+from PySide2.QtWidgets import QLabel
+from PySide2.QtGui import QPixmap
 
 import numpy as np
 from numpy import mat
 from numpy import zeros
 
-from chess import dirpath
 from chess import Chess
 from logger import logger
 
 from attrdict import attrdict
+from version import VERSION
+import system
+
+dirpath = system.get_dirpath()
 
 
 class Signal(QtCore.QObject):
@@ -24,7 +30,7 @@ class Board(QLabel):
     BOARD = str(dirpath / u"images/board.png")
     MARK = str(dirpath / u"images/mark.png")
     CHECK = str(dirpath / u"images/check.png")
-    FAVICON = str(dirpath / u"images/favicon.ico")
+    FAVICON = str(dirpath / u"images/black_bishop.png")
 
     IMAGES = {
         Chess.R: str(dirpath / 'images/red_rook.png'),
@@ -57,6 +63,18 @@ class Board(QLabel):
             self.setWindowIcon(QtGui.QIcon(self.FAVICON))
             self.setWindowTitle(u"Chinese Chess")
             # self.setWindowFlags(self.flags)
+
+        # https://www.mfitzp.com/tutorials/packaging-pyqt5-pyside2-applications-windows-pyinstaller/
+
+        app = QtWidgets.QApplication.instance()
+        if app:
+            app.setWindowIcon(QtGui.QIcon(self.FAVICON))
+
+        if os.name == 'nt':
+            logger.info("set model id")
+            ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(
+                f'StevenBaby.Chess.{VERSION}'
+            )
 
         self.setObjectName(u"Board")
         self.setScaledContents(True)
@@ -238,6 +256,7 @@ class BoardFrame(QtWidgets.QFrame):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.board = Board(self)
+        # self.setWindowOpacity(0.85)
         if parent is None:
             self.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
             self.setWindowTitle(u"中国象棋")

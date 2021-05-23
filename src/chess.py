@@ -1,11 +1,7 @@
 # coding=utf-8
-from pathlib import Path
-
 import numpy as np
 
 from logger import logger
-
-dirpath = Path(__file__).parent
 
 
 class Chess(object):

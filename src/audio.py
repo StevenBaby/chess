@@ -2,9 +2,12 @@
 
 import pygame
 
-from chess import dirpath
 from chess import Chess
 from logger import logger
+
+import system
+
+dirpath = system.get_dirpath()
 
 AUDIO_MOVE = str(dirpath / 'audios/move.wav')
 AUDIO_CAPTURE = str(dirpath / 'audios/capture.wav')
