@@ -2,3 +2,5 @@ __pycache__
 *.pyc
 .vscode
 *.fen
+src/build
+src/build.spec
