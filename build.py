@@ -1,9 +1,13 @@
 # coding=utf-8
 
-from version import VERSION
-import system
+import os
+import sys
+import pathlib
 
-dirpath = system.get_dirpath()
+dirpath = pathlib.Path(__file__).parent
+sys.path.insert(0, str(dirpath / 'src'))
+
+from version import VERSION  # noqa
 
 with open(dirpath / 'main.spec', 'r') as file:
     content = file.read()

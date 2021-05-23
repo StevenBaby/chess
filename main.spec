@@ -2,13 +2,13 @@
 
 block_cipher = None
 
-a = Analysis(['main.py'],
-             pathex=['.'],
+a = Analysis(['src/main.py'],
+             pathex=['./src'],
              binaries=[],
              datas=[
-                 ('images', 'images'),
-                 ('engines', 'engines'),
-                 ('audios', 'audios')],
+                 ('src/images', 'images'),
+                 ('src/engines', 'engines'),
+                 ('src/audios', 'audios')],
              hiddenimports=[],
              hookspath=[],
              runtime_hooks=[],
@@ -32,4 +32,4 @@ exe = EXE(pyz,
           upx=True,
           upx_exclude=[],
           runtime_tmpdir=None,
-          console=False, icon='images\\favicon.ico')
+          console=False, icon='src/images/favicon.ico')

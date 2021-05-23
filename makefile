@@ -1,6 +1,8 @@
 
-ui.py: ui.ui
+src/ui.py: src/ui.ui
 	PySide2-uic $< -o $@
+
+ui: src/ui.py
 
 sepc: main.spec
 	pyinstaller $<
@@ -15,10 +17,10 @@ build: build.spec
 # 	--add-data 'engines;engines' \
 # 	--add-data 'audios;audios' \
 # 	-F -w --version-file file_version_info.txt
-	pyinstaller $< --name chess-1.0.0
+	pyinstaller $<
 
 .PHONY: clean
 clean:
-	rm -rf build
-	rm -rf dist
+	rm -rf build/build
 	rm -rf build.spec
+	rm -rf build
