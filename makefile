@@ -4,23 +4,26 @@ src/ui.py: src/ui.ui
 
 ui: src/ui.py
 
-sepc: main.spec
-	pyinstaller $<
+VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
 
 build.spec: main.spec
-	python build.py
+	sed 's/version/$(VERSION)/' $< > $@
 
 .PHONY:build
-build: build.spec
-# pyinstaller $< -i images/favicon.ico \
-# 	--add-data 'images;images' \
-# 	--add-data 'engines;engines' \
-# 	--add-data 'audios;audios' \
-# 	-F -w --version-file file_version_info.txt
-	pyinstaller $<
+build: src/main.py
+	pyinstaller $< -i src/images/favicon.ico \
+		--add-data 'src/images;images' \
+		--add-data 'src/engines;engines' \
+		--add-data 'src/audios;audios' \
+		-F -w --name chess-$(VERSION)
+
+.PHONY: test
+test:
+	echo $(VERSION)
 
 .PHONY: clean
 clean:
-	rm -rf build/build
-	rm -rf build.spec
+	rm -rf build/*/*
+	rm -rf build/*
 	rm -rf build
+	rm -rf *.spec
