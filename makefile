@@ -28,4 +28,3 @@ clean:
 	rm -rf build/*
 	rm -rf build
 	rm -rf *.spec
-	rm -rf src/ui/settings.py
