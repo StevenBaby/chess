@@ -9,6 +9,8 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 
 from board import BoardFrame
+from settings import Settings
+
 from engine import Engine
 from engine import UCCIEngine
 from engine import Chess
@@ -50,7 +52,7 @@ class ContextMenuMixin(QtWidgets.QWidget):
         ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
         ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
         'separator',
-        # ['设置', '', lambda self: self.signal.settings.emit()],
+        ['设置', '', lambda self: self.signal.settings.emit()],
     ]
 
     if system.DEBUG:
@@ -157,7 +159,21 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.createContextMenu()
 
-        self.board.csize = 50
+        self.settings = Settings(self)
+        self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
+        self.settings.transprancy.valueChanged.connect(
+            lambda e: self.setWindowOpacity((100 - e) / 100)
+        )
+
+        self.settings.reverse.stateChanged.connect(
+            lambda e: self.board.setReverse(self.settings.reverse.isChecked())
+        )
+
+        self.settings.buttonBox.accepted.connect(self.accepted)
+
+        self.signal.settings.connect(self.settings.show)
+
+        self.board.csize = 80
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
         self.audioPlay = QtCore.Slot(int)(audio.play)
@@ -186,8 +202,34 @@ class Game(BoardFrame, ContextMenuMixin):
         self.depth_computer = 1
         self.depth_hint = 7
 
+        self.engine_side = [Chess.BLACK]
+        self.human_side = [Chess.RED]
+
         audio.init()
         self.reset()
+
+    def accepted(self):
+        logger.info("setting accepted....")
+
+        # 设置棋手或AI
+        self.engine_side = []
+        self.human_side = []
+
+        if self.settings.redside.currentText() == '棋手':
+            self.human_side.append(Chess.RED)
+        else:
+            self.engine_side.append(Chess.RED)
+
+        if self.settings.blackside.currentText() == '棋手':
+            self.human_side.append(Chess.BLACK)
+        else:
+            self.engine_side.append(Chess.BLACK)
+
+        self.try_engine_move()
+
+    def try_engine_move(self):
+        if self.engine.sit.turn in self.engine_side:
+            self.engine.go(depth=self.depth_computer)
 
     def reset(self):
         if hasattr(self, 'engine'):
@@ -203,13 +245,15 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.difficulty.emit(self.depth_computer)
         self.updateBoard()
         self.board.setCheck(None)
+        self.try_engine_move()
 
     @QtCore.Slot(None)
     def undo(self):
         for _ in range(2):
             self.engine.undo()
-            if self.engine.sit.turn == Chess.RED:
+            if self.engine.sit.turn in self.human_side:
                 break
+
         self.signal.hint.emit(False)
         self.updateBoard()
 
@@ -219,7 +263,7 @@ class Game(BoardFrame, ContextMenuMixin):
             self.engine.redo()
             logger.debug('engine redo result %d', self.engine.sit.result)
             self.signal.move.emit(self.engine.sit.result)
-            if self.engine.sit.turn == Chess.RED:
+            if self.engine.sit.turn in self.human_side:
                 break
 
         self.signal.hint.emit(False)
@@ -302,15 +346,18 @@ class Game(BoardFrame, ContextMenuMixin):
             self.signal.checkmate.emit()
             return
 
-        if self.engine.sit.turn == Chess.BLACK:
-            self.engine.go(depth=self.depth_computer)
+        self.try_engine_move()
 
     @QtCore.Slot(int)
     def change_difficulty(self, diff):
         self.depth_computer = diff
 
     def updateBoard(self):
-        self.board.setBoard(self.engine.sit.board, self.engine.sit.fpos, self.engine.sit.tpos)
+        self.board.setBoard(
+            self.engine.sit.board,
+            self.engine.sit.fpos,
+            self.engine.sit.tpos
+        )
 
     @QtCore.Slot(None)
     def checkmateMessage(self):

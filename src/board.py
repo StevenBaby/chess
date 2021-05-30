@@ -110,6 +110,7 @@ class Board(QLabel):
         self.fpos = None
         self.tpos = None
         self.check = None
+        self.reverse = False
 
         self.update()
 
@@ -119,6 +120,10 @@ class Board(QLabel):
         self.board = board
         self.fpos = fpos
         self.tpos = tpos
+        self.signal.refresh.emit()
+
+    def setReverse(self, reverse):
+        self.reverse = reverse
         self.signal.refresh.emit()
 
     def setCheck(self, check):
@@ -232,12 +237,19 @@ class Board(QLabel):
         label.setVisible(True)
 
     def getChessGeometry(self, pos):
+        pos = self.fitPosition(pos)
         return QtCore.QRect(
             pos[0] * self.csize,
             pos[1] * self.csize,
             self.csize,
             self.csize
         )
+
+    def fitPosition(self, pos):
+        if self.reverse:
+            return (Chess.W - pos[0] - 1, Chess.H - pos[1] - 1)
+        else:
+            return pos
 
     def getPosition(self, event):
         x = event.x() // self.csize
@@ -248,7 +260,8 @@ class Board(QLabel):
         if y < 0 or y >= Chess.H:
             return None
 
-        return (int(x), int(y))
+        pos = (int(x), int(y))
+        return self.fitPosition(pos)
 
 
 class BoardFrame(QtWidgets.QFrame):

@@ -1,8 +1,9 @@
 
-src/ui.py: src/ui.ui
+src/ui/settings.py: src/ui/settings.ui
 	PySide2-uic $< -o $@
 
-ui: src/ui.py
+.PHONY:ui
+ui: src/ui/settings.py
 
 VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
 
@@ -27,3 +28,4 @@ clean:
 	rm -rf build/*
 	rm -rf build
 	rm -rf *.spec
+	rm -rf src/ui/settings.py
