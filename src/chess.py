@@ -7,12 +7,19 @@ from logger import logger
 class Chess(object):
 
     NONE = 0
-    RMASK = 16
-    BMASK = 32
+
+    RMASK = 16  # 第五位表示红方 比如红車 0b01_0_001
+    # 判断棋子是不是黑方只需要 按位与 0b0100000 就可以了
+
+    BMASK = 32  # 第六位表示黑方 比如黑炮 0b10_0_110
+    # 判断棋子是不是黑方只需要 按位与 0b100000 就可以了
+
     RED = RMASK
     BLACK = BMASK
-    TMASK = 0b110000
-    CMASK = 0b111  # 7
+    TMASK = 0b110000  # 棋子颜色掩码，可能的取值为 16 和 32
+    CMASK = 0b111  # 棋子掩码
+
+    # 棋子使用 1-7 来表示，二进制就是 0b001 - 0b111
 
     PAWN = 1
     ROOK = 2
@@ -63,6 +70,7 @@ class Chess(object):
 
     @staticmethod
     def invert(chess):
+        # 转换棋子颜色
         return (chess & 7) | ((~chess) & 0b110000)
 
     ORIGIN = np.mat(

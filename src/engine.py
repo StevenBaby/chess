@@ -1,4 +1,10 @@
 # coding=utf-8
+'''
+(C) Copyright 2021 Steven;
+@author: Steven kangweibaby@163.com
+@date: 2021-05-31
+用于处理 UCCI 引擎，以及未来可能自己实现引擎留接口
+'''
 
 import os
 import sys
@@ -23,6 +29,19 @@ dirpath = system.get_dirpath()
 
 
 class Queue(queue.Queue):
+
+    '''
+    该队列用于处理人机交互
+
+    首先一个 Engine 线程读取 UCCI 输出的行直接入对列
+    其次需要一个 解析线程 单独处理 UCCI 引擎的输出，在人不干预的情况下一直读队列的输出。
+    但是人与引擎交互的时候，是在另一个线程进行的，于是在人与引擎交互的时候需要将解析线程停下来。
+
+    人交互的时候:
+        1. 交互线程 (目前是主线程) 首先向队列 put 下面的 mark，然后进入 wait
+        2. 当解析线程读到 mark 的时候，notify 通知交互线程读取队列，自己进入 wait 等待交互完成
+        3. 交互线程完成之后，notify 通知解析线程继续解析。
+    '''
 
     mark = 'a3c63f6d-a880-4bde-a176-82af83bcf793'
 
@@ -74,6 +93,7 @@ class Engine(threading.Thread):
             name="ParserThread"
         )
 
+        # 引擎输出队列
         self.outlines = Queue()
         self.running = False
         self.checkmate = False
@@ -90,7 +110,8 @@ class Engine(threading.Thread):
         self.join()
 
     def move(self, fpos, tpos):
-        logger.debug('start move stack %s index %s', self.stack, self.index)
+        # logger.debug('start move stack %s index %s', self.stack, self.index)
+
         nidx = self.index + 1
         if nidx < len(self.stack) and (self.stack[nidx].fpos, self.stack[nidx].tpos) == (fpos, tpos):
             logger.debug("forward hint %s", self.sit.format_move(fpos, tpos))
@@ -121,12 +142,14 @@ class Engine(threading.Thread):
         if result == Chess.CHECKMATE:
             self.checkmate = True
 
-        logger.debug('finish move stack %s index %s', self.stack, self.index)
+        # logger.debug('finish move stack %s index %s', self.stack, self.index)
 
         return result
 
     def undo(self):
-        logger.debug('start undo stack %s index %s', self.stack, self.index)
+        # 悔棋
+
+        # logger.debug('start undo stack %s index %s', self.stack, self.index)
         if self.index == 0:
             return False
 
@@ -136,7 +159,7 @@ class Engine(threading.Thread):
         self.sit = self.stack[self.index]
 
         logger.debug(self.sit)
-        logger.debug('finish undo stack %s index %s', self.stack, self.index)
+        # logger.debug('finish undo stack %s index %s', self.stack, self.index)
 
         return True
 
@@ -150,9 +173,13 @@ class Engine(threading.Thread):
         return True
 
     def parse_line(self, line: str):
+        # 具体解析的代码，子类实现
         pass
 
     def run(self):
+        # 引擎有两个线程，自己读取引擎的输出，按行 put 到队列
+        # 解析线程 从队列读取输出，进行解析
+
         self.running = True
         self.parser_thread.start()
 
@@ -161,6 +188,8 @@ class Engine(threading.Thread):
             self.outlines.put(line)
 
     def parser(self):
+        # 解析线程
+
         self.running = True
         while self.running:
             line = self.outlines.get()
@@ -170,6 +199,7 @@ class Engine(threading.Thread):
                 logger.error(traceback.format_exc())
 
     def send_command(self, command):
+        # 向引擎写入指令
         try:
             logger.info("COMMAND: %s", command)
             line = f'{command}\n'.encode('gbk')
@@ -180,6 +210,8 @@ class Engine(threading.Thread):
             logger.error(traceback.format_exc())
 
     def readline(self):
+        # 从引擎标准输出读取一行
+
         while True:
             try:
                 line = self.stdout.readline().strip().decode('utf8')
@@ -192,6 +224,8 @@ class Engine(threading.Thread):
                 continue
 
     def clear(self):
+        # 清空引擎输出
+
         with self.outlines:
             while True:
                 try:
@@ -200,6 +234,8 @@ class Engine(threading.Thread):
                     return
 
     def setup(self):
+        # 初始化引擎
+
         logger.info("open pipe %s", self.filename)
 
         startupinfo = None

@@ -1,4 +1,12 @@
 # coding=utf-8
+'''
+(C) Copyright 2021 Steven;
+@author: Steven kangweibaby@163.com
+@date: 2021-05-31
+
+使用 pygame 播放音频
+
+'''
 
 import pygame
 

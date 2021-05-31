@@ -1,3 +1,12 @@
+# coding=utf-8
+'''
+(C) Copyright 2021 Steven;
+@author: Steven kangweibaby@163.com
+@date: 2021-05-31
+
+PySide2 棋盘基础控件，只用于棋盘的展示，和点击回调。
+'''
+
 
 import os
 import ctypes
@@ -26,6 +35,10 @@ class Signal(QtCore.QObject):
 
 
 class Board(QLabel):
+
+    '''
+    棋盘坐标与屏幕坐标类似，左上角为 (0, 0)，右下角为 (8, 9)
+    '''
 
     BOARD = str(dirpath / u"images/board.png")
     MARK = str(dirpath / u"images/mark.png")
@@ -85,17 +98,21 @@ class Board(QLabel):
             self.IMAGES[chess] = QPixmap(path)
 
         mark = QPixmap(self.MARK)
+
+        # 棋盘起始标记
         self.mark1 = QLabel(self)
         self.mark1.setPixmap(mark)
         self.mark1.setScaledContents(True)
         self.mark1.setVisible(False)
 
+        # 棋盘落子标记
         self.mark2 = QLabel(self)
         self.mark2.setPixmap(mark)
         self.mark2.setScaledContents(True)
         self.mark2.setVisible(False)
 
         check = QPixmap(self.CHECK)
+        # 将军棋子标记
         self.mark3 = QLabel(self)
         self.mark3.setPixmap(check)
         self.mark3.setScaledContents(True)
@@ -117,20 +134,31 @@ class Board(QLabel):
         self.callback = callback
 
     def setBoard(self, board, fpos=None, tpos=None):
+        # 设置 棋盘 board，以及该步，的棋子从哪儿 fpos，到哪儿 tpos
+        # 由于 该函数可能在多个线程中调用，所以下面触发 signal.refresh
+        # QT 会自动将刷新棋盘的重任放到主线程去做
+        # 如果直接在非主线程调用 refresh 函数，程序可能莫名其妙的死掉。
+
         self.board = board
         self.fpos = fpos
         self.tpos = tpos
         self.signal.refresh.emit()
 
     def setReverse(self, reverse):
+        # 设置棋盘反转 信号解释同 setBoard
+
         self.reverse = reverse
         self.signal.refresh.emit()
 
     def setCheck(self, check):
+        # 设置将军标记 信号解释同 setBoard
+
         self.check = check
         self.signal.refresh.emit()
 
     def move(self, board, fpos, tpos, callback=None):
+        # 棋盘动画
+
         label = self.getLabel(fpos)
         if not label:
             return
@@ -144,11 +172,14 @@ class Board(QLabel):
         ani.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
         ani.start()
 
+        # 动画完成的回调，目前只用于刷新棋盘
         if callable(callback):
             QtCore.QTimer.singleShot(self.ANIMATION_DURATION, callback)
 
     @QtCore.Slot()
     def refresh(self):
+        # 刷新棋盘
+
         self.setPixmap(self.board_image)
         for x in range(Chess.W):
             for y in range(Chess.H):
@@ -176,6 +207,8 @@ class Board(QLabel):
         super().update()
 
     def resizeEvent(self, event):
+        # 窗口大小变化之后，修改棋盘和棋子的大小
+
         w = self.parentWidget().width()
         h = self.parentWidget().height()
 
@@ -198,9 +231,13 @@ class Board(QLabel):
         self.refresh()
 
     def mousePressEvent(self, event):
+        # 鼠标点击事件
+        # 只处理鼠标左键点击
+
         if event.buttons() != QtCore.Qt.LeftButton:
             return super().mousePressEvent(event)
 
+        # 获取点击的棋盘坐标
         pos = self.getPosition(event)
         if not pos:
             return
@@ -212,6 +249,8 @@ class Board(QLabel):
             self.callback(pos)
 
     def getLabel(self, pos):
+        # 获取某个位置的棋子 Label
+
         if not pos:
             return None
         label = self.labels[tuple(pos)]
@@ -220,6 +259,8 @@ class Board(QLabel):
         return label
 
     def setChess(self, pos, chess):
+        # 将某个位置设置成某个棋子
+
         label = self.labels[pos]
         if not label:
             label = QLabel(self)
@@ -237,6 +278,8 @@ class Board(QLabel):
         label.setVisible(True)
 
     def getChessGeometry(self, pos):
+        # 获取某个位置棋子在棋盘的坐标及尺寸
+
         pos = self.fitPosition(pos)
         return QtCore.QRect(
             pos[0] * self.csize,
@@ -246,12 +289,16 @@ class Board(QLabel):
         )
 
     def fitPosition(self, pos):
+        '''如果旋转棋盘，那么修正棋子的位置'''
+
         if self.reverse:
             return (Chess.W - pos[0] - 1, Chess.H - pos[1] - 1)
         else:
             return pos
 
     def getPosition(self, event):
+        # 通过鼠标位置，获取棋子坐标的位置
+
         x = event.x() // self.csize
         y = event.y() // self.csize
 
