@@ -226,7 +226,7 @@ class Game(BoardFrame, ContextMenuMixin):
         else:
             self.engine_side.append(Chess.RED)
 
-        if self.settings.blackside.currentText() == 0:
+        if self.settings.blackside.currentIndex() == 0:
             self.engine_side.append(Chess.BLACK)
         else:
             self.human_side.append(Chess.BLACK)

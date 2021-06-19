@@ -21,3 +21,4 @@ clean:
 	rm -rf build/*
 	rm -rf build
 	rm -rf *.spec
+	rm -rf .qt_for_python
