@@ -107,7 +107,7 @@ class Settings(QtWidgets.QDialog):
         data.reverse = self.reverse.isChecked()
         data.audio = self.audio.isChecked()
         data.redside = self.redside.currentIndex()
-        data.blackside = self.redside.currentIndex()
+        data.blackside = self.blackside.currentIndex()
         data.delay = self.delay.value()
 
         logger.info("save settings %s", data)

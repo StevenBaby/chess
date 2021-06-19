@@ -178,6 +178,7 @@ class Game(BoardFrame, ContextMenuMixin):
         )
 
         self.settings.buttonBox.accepted.connect(self.accepted)
+        self.settings.loads()
 
         self.signal.settings.connect(self.settings.show)
 
@@ -215,7 +216,6 @@ class Game(BoardFrame, ContextMenuMixin):
         audio.init()
         self.reset()
 
-        self.settings.loads()
         self.accepted()
 
     def accepted(self):
