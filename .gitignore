@@ -7,3 +7,4 @@ dist
 build.spec
 .qt_for_python
 *.spec
+src/settings.json

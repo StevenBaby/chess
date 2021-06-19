@@ -173,6 +173,10 @@ class Game(BoardFrame, ContextMenuMixin):
             lambda e: audio.play(Chess.MOVE) if e else None
         )
 
+        self.settings.delay.valueChanged.connect(
+            lambda e: setattr(self, 'delay', e / 1000)
+        )
+
         self.settings.buttonBox.accepted.connect(self.accepted)
 
         self.signal.settings.connect(self.settings.show)

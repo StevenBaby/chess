@@ -30,6 +30,7 @@ class Settings(QtWidgets.QDialog):
         self.version = self.ui.version
         self.checkupdate = self.ui.checkupdate
         self.audio = self.ui.audio
+        self.delay = self.ui.delay
 
         self.version.setText(f"v{VERSION}")
         self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText('确认')
@@ -57,6 +58,7 @@ class Settings(QtWidgets.QDialog):
         data.audio = True
         data.redside = 0
         data.blackside = 0
+        data.delay = 300
         return data
 
     def loads(self):
@@ -92,6 +94,9 @@ class Settings(QtWidgets.QDialog):
         logger.info("set blackside %s", result.blackside)
         self.blackside.setCurrentIndex(result.blackside)
 
+        logger.info("set delay %s", result.delay)
+        self.delay.setValue(result.delay)
+
     @QtCore.Slot(None)
     def save(self):
         import json
@@ -103,6 +108,9 @@ class Settings(QtWidgets.QDialog):
         data.audio = self.audio.isChecked()
         data.redside = self.redside.currentIndex()
         data.blackside = self.redside.currentIndex()
+        data.delay = self.delay.value()
+
+        logger.info("save settings %s", data)
 
         content = json.dumps(data, ensure_ascii=False, indent=4)
         with open(self.get_filename(), 'w', encoding='utf8') as file:
