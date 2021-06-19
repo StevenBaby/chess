@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>440</width>
-    <height>224</height>
+    <width>427</width>
+    <height>248</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -22,37 +22,44 @@
      <property name="verticalSpacing">
       <number>20</number>
      </property>
-     <item row="0" column="0">
-      <widget class="QLabel" name="label">
+     <item row="2" column="3">
+      <widget class="QComboBox" name="blackside">
        <property name="font">
         <font>
          <family>DengXian</family>
          <pointsize>14</pointsize>
         </font>
        </property>
-       <property name="text">
-        <string>透明度</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
+       <item>
+        <property name="text">
+         <string>电脑</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>棋手</string>
+        </property>
+       </item>
       </widget>
      </item>
-     <item row="0" column="1">
-      <spacer name="horizontalSpacer">
+     <item row="4" column="2" colspan="2">
+      <widget class="QDialogButtonBox" name="buttonBox">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="locale">
+        <locale language="Chinese" country="China"/>
+       </property>
        <property name="orientation">
         <enum>Qt::Horizontal</enum>
        </property>
-       <property name="sizeType">
-        <enum>QSizePolicy::Minimum</enum>
+       <property name="standardButtons">
+        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
        </property>
-       <property name="sizeHint" stdset="0">
-        <size>
-         <width>20</width>
-         <height>20</height>
-        </size>
-       </property>
-      </spacer>
+      </widget>
      </item>
      <item row="2" column="0">
       <widget class="QLabel" name="label_3">
@@ -70,7 +77,68 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="3">
+     <item row="2" column="1">
+      <widget class="QComboBox" name="redside">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <item>
+        <property name="text">
+         <string>棋手</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>电脑</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>版本号</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1" colspan="3">
+      <widget class="QSlider" name="transprancy">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>12</pointsize>
+        </font>
+       </property>
+       <property name="minimum">
+        <number>0</number>
+       </property>
+       <property name="maximum">
+        <number>75</number>
+       </property>
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="tickPosition">
+        <enum>QSlider::NoTicks</enum>
+       </property>
+       <property name="tickInterval">
+        <number>0</number>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
       <widget class="QLabel" name="label_4">
        <property name="font">
         <font>
@@ -102,99 +170,25 @@
        </property>
       </widget>
      </item>
-     <item row="2" column="2">
-      <widget class="QComboBox" name="redside">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <item>
-        <property name="text">
-         <string>棋手</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>电脑</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="4" column="3" colspan="2">
-      <widget class="QDialogButtonBox" name="buttonBox">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="locale">
-        <locale language="Chinese" country="China"/>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="standardButtons">
-        <set>QDialogButtonBox::Cancel|QDialogButtonBox::Ok</set>
-       </property>
-      </widget>
-     </item>
-     <item row="0" column="2" colspan="2">
-      <widget class="QSlider" name="transprancy">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>12</pointsize>
-        </font>
-       </property>
-       <property name="minimum">
-        <number>0</number>
-       </property>
-       <property name="maximum">
-        <number>75</number>
-       </property>
-       <property name="orientation">
-        <enum>Qt::Horizontal</enum>
-       </property>
-       <property name="tickPosition">
-        <enum>QSlider::NoTicks</enum>
-       </property>
-       <property name="tickInterval">
-        <number>0</number>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="4">
-      <widget class="QComboBox" name="blackside">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <item>
-        <property name="text">
-         <string>电脑</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>棋手</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="2" colspan="2">
+     <item row="1" column="1">
       <widget class="QCheckBox" name="reverse">
        <property name="text">
         <string/>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_5">
+     <item row="1" column="3">
+      <widget class="QCheckBox" name="audio">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -202,14 +196,14 @@
         </font>
        </property>
        <property name="text">
-        <string>版本号</string>
+        <string>透明度</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="3" column="2" colspan="2">
+     <item row="3" column="1" colspan="2">
       <widget class="QLabel" name="version">
        <property name="font">
         <font>
@@ -225,7 +219,23 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="4">
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_6">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>音效</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="3">
       <widget class="QPushButton" name="checkupdate">
        <property name="font">
         <font>

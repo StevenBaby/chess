@@ -20,4 +20,11 @@ def get_dirpath():
         return pathlib.Path(__file__).parent
 
 
+def get_execpath():
+    if getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS'):
+        return os.path.dirname(os.path.realpath(sys.executable))
+    else:
+        return pathlib.Path(__file__).parent
+
+
 logger.debug("system release %s debug %s dirpath %s", RELEASE, DEBUG, get_dirpath())

@@ -6,3 +6,4 @@ build
 dist
 build.spec
 .qt_for_python
+*.spec

@@ -169,6 +169,10 @@ class Game(BoardFrame, ContextMenuMixin):
             lambda e: self.board.setReverse(self.settings.reverse.isChecked())
         )
 
+        self.settings.audio.stateChanged.connect(
+            lambda e: audio.play(Chess.MOVE) if e else None
+        )
+
         self.settings.buttonBox.accepted.connect(self.accepted)
 
         self.signal.settings.connect(self.settings.show)
@@ -176,7 +180,6 @@ class Game(BoardFrame, ContextMenuMixin):
         self.board.csize = 80
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
-        self.audioPlay = QtCore.Slot(int)(audio.play)
 
         self.signal.hint.connect(self.contextHint)
         self.signal.hint.connect(self.hint)
@@ -188,7 +191,7 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.load.connect(self.load)
         self.signal.save.connect(self.save)
 
-        self.signal.move.connect(self.audioPlay)
+        self.signal.move.connect(self.play)
         self.signal.difficulty.connect(self.change_difficulty)
         self.signal.difficulty.connect(self.show_difficulty)
 
@@ -208,6 +211,9 @@ class Game(BoardFrame, ContextMenuMixin):
         audio.init()
         self.reset()
 
+        self.settings.loads()
+        self.accepted()
+
     def accepted(self):
         logger.info("setting accepted....")
 
@@ -215,21 +221,27 @@ class Game(BoardFrame, ContextMenuMixin):
         self.engine_side = []
         self.human_side = []
 
-        if self.settings.redside.currentText() == '棋手':
+        if self.settings.redside.currentIndex() == 0:
             self.human_side.append(Chess.RED)
         else:
             self.engine_side.append(Chess.RED)
 
-        if self.settings.blackside.currentText() == '棋手':
-            self.human_side.append(Chess.BLACK)
-        else:
+        if self.settings.blackside.currentText() == 0:
             self.engine_side.append(Chess.BLACK)
+        else:
+            self.human_side.append(Chess.BLACK)
 
         self.try_engine_move()
 
     def try_engine_move(self):
         if self.engine.sit.turn in self.engine_side:
             self.engine.go(depth=self.depth_computer)
+
+    @QtCore.Slot(int)
+    def play(self, audio_type):
+        if not self.settings.audio.isChecked():
+            return
+        audio.play(audio_type)
 
     def reset(self):
         if hasattr(self, 'engine'):
