@@ -75,39 +75,24 @@ class Engine(threading.Thread):
     ENGINE_IDLE = 1
     ENGINE_BUSY = 2
 
-    def __init__(self, filename: Path):
+    def __init__(self):
         super().__init__(daemon=True)
         self.name = 'EngineThread'
-
-        self.filename = Path(filename)
-        self.dirname = str(filename.parent)
-        self.pipe = None
         self.state = self.ENGINE_BOOT
 
         self.sit = Situation()
         self.stack = [self.sit]
 
-        self.parser_thread = threading.Thread(
-            target=self.parser,
-            daemon=True,
-            name="ParserThread"
-        )
-
-        # 引擎输出队列
-        self.outlines = Queue()
-        self.running = False
         self.checkmate = False
 
         self.index = 0
+        self.running = False
 
-        self.setup()
+    def setup(self):
+        pass
 
     def close(self):
-        self.running = False
-        if self.pipe:
-            self.pipe.terminate()
-        self.parser_thread.join()
-        self.join()
+        pass
 
     def move(self, fpos, tpos):
         # logger.debug('start move stack %s index %s', self.stack, self.index)
@@ -171,6 +156,33 @@ class Engine(threading.Thread):
         self.index += 1
         self.sit = self.stack[self.index]
         return True
+
+
+class PipeEngine(Engine):
+
+    def __init__(self, filename: Path):
+        super().__init__()
+
+        self.filename = Path(filename)
+        self.dirname = str(filename.parent)
+        self.pipe = None
+
+        self.parser_thread = threading.Thread(
+            target=self.parser,
+            daemon=True,
+            name="ParserThread"
+        )
+
+        # 引擎输出队列
+        self.outlines = Queue()
+        self.setup()
+
+    def close(self):
+        self.running = False
+        if self.pipe:
+            self.pipe.terminate()
+        self.parser_thread.join()
+        self.join()
 
     def parse_line(self, line: str):
         # 具体解析的代码，子类实现
@@ -256,7 +268,7 @@ class Engine(threading.Thread):
         self.stderr = self.pipe.stderr
 
 
-class UCCIEngine(Engine):
+class UCCIEngine(PipeEngine):
 
     '''https://www.xqbase.com/protocol/cchess_ucci.htm'''
 
