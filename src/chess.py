@@ -73,6 +73,18 @@ class Chess(object):
         # 转换棋子颜色
         return (chess & 7) | ((~chess) & 0b110000)
 
+    @staticmethod
+    def is_red(chess):
+        return chess & Chess.RED
+
+    @staticmethod
+    def is_black(chess):
+        return chess & Chess.BLACK
+
+    @staticmethod
+    def chess(c):
+        return c & Chess.CMASK
+
     ORIGIN = np.mat(
         np.array(
             [

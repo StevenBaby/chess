@@ -7,6 +7,7 @@ import numpy as np
 
 from chess import Chess
 from logger import logger
+from comment import Comment
 
 
 class Generator(object):
@@ -235,7 +236,7 @@ class Generator(object):
         return True
 
 
-class Situation(Generator):
+class Situation(Generator, Comment):
 
     def __init__(self, board: np.array = None, turn=Chess.RED, moves=None, bout=1, idle=0):
         if not board:
@@ -414,6 +415,8 @@ class Situation(Generator):
     def move(self, fpos, tpos):
         if not self.validate_move(self.board, fpos, tpos):
             return False
+
+        logger.info("get comment %s", self.get_comment(self.board, fpos, tpos))
 
         board = copy.deepcopy(self.board)
         board[tpos] = board[fpos]

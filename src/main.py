@@ -351,7 +351,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
         if self.engine.sit.check:
             self.board.setCheck(self.engine.sit.check)
-            logger.debug('invalid ... %s', self.engine.sit.check)
+            logger.debug('check ... %s', self.engine.sit.check)
         else:
             self.board.setCheck(None)
 

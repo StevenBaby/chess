@@ -1,0 +1,172 @@
+'''
+(C) Copyright 2021 Steven;
+@author: Steven kangweibaby@163.com
+@date: 2021-06-21
+用于生成 走法的中文描述，如 炮二平五，马八进七
+'''
+
+# coding=utf-8
+import numpy as np
+
+from chess import Chess
+from logger import logger
+
+
+class Comment(object):
+
+    NAMES = {
+        Chess.P: '兵',
+        Chess.R: '俥',
+        Chess.N: '傌',
+        Chess.B: '相',
+        Chess.A: '仕',
+        Chess.C: '炮',
+        Chess.K: '帥',
+        Chess.p: '卒',
+        Chess.r: '車',
+        Chess.n: '馬',
+        Chess.b: '象',
+        Chess.a: '士',
+        Chess.c: '砲',
+        Chess.k: '將',
+    }
+
+    nums = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+
+    def get_name(self, chess):
+        if not chess:
+            return None
+        return self.NAMES[chess]
+
+    def get_pos(self, chess, pos):
+        if Chess.is_black(chess):
+            num = pos[0] + 1
+        else:
+            num = 9 - pos[0]
+        return self.nums[num]
+
+    def get_action(self, chess, fpos, tpos):
+        delta = (tpos[0] - fpos[0], tpos[1] - fpos[1])
+        if Chess.is_red(chess):
+            delta = (-delta[0], -delta[1])
+
+        posx = self.get_pos(chess, tpos)
+
+        if Chess.chess(chess) in {Chess.ROOK, Chess.CANNON, Chess.PAWN, Chess.KING}:
+            posy = self.nums[abs(delta[1])]
+        else:
+            posy = posx
+
+        if delta[1] > 0:
+            action = '进'
+            pos = posy
+        elif delta[1] < 0:
+            action = '退'
+            pos = posy
+        else:
+            action = f'平'
+            pos = posx
+
+        return f'{action}{pos}'
+
+    def get_column_chess(self, board, fpos):
+        chess = board[fpos]
+        result = []
+        for var in range(0, 10):
+            pos = (fpos[0], var)
+            if board[pos] == chess:
+                result.append(pos)
+        return result
+
+    def get_pawns(self, board, chess):
+        wheres = np.argwhere(board == chess)
+        return wheres
+
+    def get_comment(self, board, fpos, tpos):
+        chess = board[fpos]
+        name = self.get_name(chess)
+        pos = self.get_pos(chess, fpos)
+        action = self.get_action(chess, fpos, tpos)
+
+        comment = f'{name}{pos}{action}'
+
+        if Chess.chess(chess) not in {Chess.ROOK, Chess.KNIGHT, Chess.CANNON, Chess.PAWN}:
+            return comment
+
+        chesses = self.get_column_chess(board, fpos)
+        if len(chesses) == 1:
+            return comment
+
+        # 同一列棋子多于一个
+        if Chess.is_black(chess):
+            chesses.reverse()
+
+        if fpos == chesses[0]:
+            pos = '前'
+        else:
+            pos = '后'
+
+        comment = f'{pos}{name}{action}'
+
+        if Chess.chess(chess) in {Chess.ROOK, Chess.KNIGHT, Chess.CANNON}:
+            return comment
+
+        # 以下为卒的情况
+        elif len(chesses) > 3:  # 单列棋子数量大于 3 个
+            pos = 1
+            for idx, var in enumerate(chesses):
+                if var == fpos:
+                    pos = idx + 1
+                    break
+            pos = self.nums[pos]
+            return f'{pos}{name}{action}'
+
+        pawns = self.get_pawns(board, chess)
+        if len(pawns) == 2:
+            return comment
+
+        # 棋盘棋子数量大于两个
+
+        columns = {}
+
+        for pos in pawns:
+            columns.setdefault(pos[0], 0)
+            columns[pos[0]] += 1
+
+        for var in list(columns.keys()):
+            if columns[var] == 1:
+                del columns[var]
+
+        if len(chesses) == 3 and len(columns) == 1:
+            if fpos == chesses[0]:
+                pos = '前'
+            elif fpos == chesses[1]:
+                pos = '中'
+            else:
+                pos = '后'
+            return f'{pos}{name}{action}'
+
+        # 两列的情况
+        rangex = list(range(9))
+        if Chess.is_red(chess):
+            rangex.reverse()
+
+        rangey = list(range(10))
+        if Chess.is_black(chess):
+            rangey.reverse()
+
+        index = 0
+        for x in rangex:
+            if x not in columns:
+                continue
+            for y in rangey:
+                pos = (x, y)
+                if board[pos] != chess:
+                    continue
+                index += 1
+                if fpos == pos:
+                    pos = self.nums[index]
+                    return f'{pos}{name}{action}'
+
+        # 理论上不可能到这里
+        raise Exception('get comment error')
