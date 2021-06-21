@@ -189,7 +189,7 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.undo.connect(lambda: self.comments.refresh(self.engine))
         self.signal.redo.connect(lambda: self.comments.refresh(self.engine))
         self.signal.move.connect(lambda: self.comments.refresh(self.engine))
-        self.comments.ui.comments.itemClicked.connect(self.comments_changed)
+        self.comments.ui.comments.currentItemChanged.connect(self.comments_changed)
         self.comments.refresh(self.engine)
 
         self.accepted()
@@ -197,6 +197,8 @@ class Game(BoardFrame, ContextMenuMixin):
     def comments_changed(self, item: QtWidgets.QListWidgetItem):
         index = self.comments.ui.comments.indexFromItem(item).row()
         self.engine.set_index(index)
+        if self.board.animate.state() == QtCore.QAbstractAnimation.State.Running:
+            return
         self.updateBoard()
 
     def accepted(self):

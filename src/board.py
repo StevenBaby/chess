@@ -92,6 +92,8 @@ class Board(QLabel):
         self.setObjectName(u"Board")
         self.setScaledContents(True)
 
+        self.animate = QtCore.QPropertyAnimation(self, b'geometry', self)
+
         self.resize(self.csize * Chess.W, self.csize * Chess.H)
 
         for chess, path in self.IMAGES.items():
@@ -165,12 +167,12 @@ class Board(QLabel):
 
         label.setVisible(True)
         label.raise_()  # 将控件提到前面
-        ani = QtCore.QPropertyAnimation(label, b'geometry', self)
-        ani.setTargetObject(label)
-        ani.setDuration(self.ANIMATION_DURATION)
-        ani.setStartValue(QtCore.QRect(self.getChessGeometry(fpos)))
-        ani.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
-        ani.start()
+
+        self.animate.setTargetObject(label)
+        self.animate.setDuration(self.ANIMATION_DURATION)
+        self.animate.setStartValue(QtCore.QRect(self.getChessGeometry(fpos)))
+        self.animate.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
+        self.animate.start()
 
         # 动画完成的回调，目前只用于刷新棋盘
         if callable(callback):

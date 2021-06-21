@@ -99,9 +99,9 @@ class Engine(threading.Thread):
     def set_index(self, index):
         if index < 0:
             return
-        if index > len(self.stack):
+        if index >= len(self.stack):
             return
-        logger.debug(f"{index}, {len(self.stack)}")
+        # logger.debug(f"{index}, {len(self.stack)}")
 
         self.index = index
         self.sit = self.stack[self.index]
@@ -349,13 +349,10 @@ class UCCIEngine(PipeEngine):
         result = super().move(fpos, tpos)
         if not result:
             return result
-
-        self.position()
         return result
 
     def undo(self):
         if super().undo():
-            self.position()
             return True
 
     def banmoves(self, moves: list):
@@ -368,6 +365,7 @@ class UCCIEngine(PipeEngine):
            time=None, increment=None,
            opptime=None, oppmovetogo=None, oppincrement=None,
            draw=None, ponder=None):
+        self.position()
 
         command = "go"
         if draw:
