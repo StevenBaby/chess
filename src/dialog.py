@@ -135,6 +135,8 @@ class Settings(QtWidgets.QDialog):
         data.redside = self.redside.currentIndex()
         data.blackside = self.blackside.currentIndex()
         data.delay = self.delay.value()
+        data.hint_depth = self.hint_depth.value()
+        data.engine_depth = self.engine_depth.value()
 
         logger.info("save settings %s", data)
 
