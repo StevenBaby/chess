@@ -110,43 +110,12 @@ class ContextMenuMixin(QtWidgets.QWidget):
                 self.context_menu.addSeparator()
                 continue
 
-        # self.difficulty_menu = QtWidgets.QMenu(self, title="难度")
-        # action = self.difficulty_menu.menuAction()
-        # action.setFont(self.font_families)
-        # self.context_menu.addAction(action)
-
-        # for diff in range(self.max_difficulty):
-        #     difficulty = diff + 1
-        #     action = QtWidgets.QAction(str(difficulty), self)
-        #     action.setFont(self.font_families)
-        #     action.setCheckable(True)
-        #     self.difficulty_menu.addAction(action)
-
-        #     action.triggered.connect(partial(self.signal.difficulty.emit, difficulty))
-
-    @QtCore.Slot(int)
-    def show_difficulty(self, diff):
-        logger.debug('difficulty %s', diff)
-        actions = self.difficulty_menu.actions()
-        if diff > len(actions):
-            return
-        for index, action in enumerate(actions):
-            if index == (diff - 1):
-                action.setChecked(True)
-            else:
-                action.setChecked(False)
-
-    @QtCore.Slot(None)
-    def test_slot(self):
-        logger.debug('test slot called!!!')
-
     def showContextMenu(self, pos):
         self.context_menu.move(QtGui.QCursor().pos())
         self.context_menu.show()
 
     @QtCore.Slot(bool)
     def contextHint(self, hint=True):
-        # logger.debug('context hint ....')
         self.context_menu.actions()[0].setEnabled(not hint)
         self.shortcuts[0].setEnabled(not hint)
 
