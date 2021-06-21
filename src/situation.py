@@ -450,10 +450,12 @@ class Situation(Generator, Comment):
         if self.is_checkmate(self.board, self.turn):
             logger.warning("Checkmate ......")
             return Chess.CHECKMATE
+
         check = self.get_check(self.board, self.turn)
         if check:
             self.check = check
             return Chess.CHECK
+
         return result
 
     def __repr__(self):

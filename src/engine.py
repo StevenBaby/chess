@@ -83,16 +83,28 @@ class Engine(threading.Thread):
         self.sit = Situation()
         self.stack = [self.sit]
 
-        self.checkmate = False
-
         self.index = 0
         self.running = False
+
+    @property
+    def checkmate(self):
+        return self.sit.result == Chess.CHECKMATE
 
     def setup(self):
         pass
 
     def close(self):
         pass
+
+    def set_index(self, index):
+        if index < 0:
+            return
+        if index > len(self.stack):
+            return
+        logger.debug(f"{index}, {len(self.stack)}")
+
+        self.index = index
+        self.sit = self.stack[self.index]
 
     def move(self, fpos, tpos):
         # logger.debug('start move stack %s index %s', self.stack, self.index)
@@ -103,8 +115,6 @@ class Engine(threading.Thread):
             self.sit = self.stack[nidx]
             self.index = nidx
             result = self.sit.result
-            if result == Chess.CHECKMATE:
-                self.checkmate = True
             return self.sit.result
         else:
             self.stack = self.stack[:self.index + 1]
@@ -124,9 +134,6 @@ class Engine(threading.Thread):
         else:
             self.sit.check = sit.check
 
-        if result == Chess.CHECKMATE:
-            self.checkmate = True
-
         # logger.debug('finish move stack %s index %s', self.stack, self.index)
 
         return result
@@ -138,7 +145,6 @@ class Engine(threading.Thread):
         if self.index == 0:
             return False
 
-        self.checkmate = False
         self.index -= 1
 
         self.sit = self.stack[self.index]

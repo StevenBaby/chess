@@ -4,14 +4,27 @@ import os
 
 from PySide2 import QtCore
 from PySide2 import QtWidgets
-from ui.settings import Ui_Dialog
+from PySide2 import QtGui
+from PySide2.QtCore import Qt
+
 from version import VERSION
 from attrdict import attrdict
 from logger import logger
 
+from engine import Engine
+from chess import Chess
+
+from ui import settings
+from ui import comments
+
 import system
 
 UPDATE_URL = 'https://github.com/StevenBaby/chess/releases'
+
+
+class Signal(QtCore.QObject):
+
+    refresh = QtCore.Signal(None)
 
 
 class Settings(QtWidgets.QDialog):
@@ -19,10 +32,10 @@ class Settings(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.ui = Ui_Dialog()
+        self.ui = settings.Ui_Dialog()
         self.ui.setupUi(self)
 
-        self.buttonBox = self.ui.buttonBox
+        self.ok = self.ui.ok
         self.transprancy = self.ui.transprancy
         self.reverse = self.ui.reverse
         self.redside = self.ui.redside
@@ -31,10 +44,10 @@ class Settings(QtWidgets.QDialog):
         self.checkupdate = self.ui.checkupdate
         self.audio = self.ui.audio
         self.delay = self.ui.delay
+        self.hint_depth = self.ui.hint_depth
+        self.engine_depth = self.ui.engine_depth
 
         self.version.setText(f"v{VERSION}")
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Ok).setText('确认')
-        self.buttonBox.button(QtWidgets.QDialogButtonBox.Cancel).setText('取消')
         self.checkupdate.clicked.connect(self.check_update)
 
         # 去掉标题栏问号
@@ -45,7 +58,12 @@ class Settings(QtWidgets.QDialog):
         # 设置标题
         self.setWindowTitle("设置")
 
-        self.ui.buttonBox.accepted.connect(self.save)
+        self.setStyleSheet("font-family: dengxian;")
+
+        self.ui.ok.clicked.connect(self.save)
+
+        self.ui.ok.clicked.connect(self.hide)
+        self.ui.cancel.clicked.connect(self.hide)
 
     def get_filename(self):
         return os.path.join(system.get_execpath(), 'settings.json')
@@ -59,6 +77,8 @@ class Settings(QtWidgets.QDialog):
         data.redside = 0
         data.blackside = 0
         data.delay = 300
+        data.hint_depth = 7
+        data.engine_depth = 1
         return data
 
     def loads(self):
@@ -97,6 +117,12 @@ class Settings(QtWidgets.QDialog):
         logger.info("set delay %s", result.delay)
         self.delay.setValue(result.delay)
 
+        logger.info("set hint_depth %s", result.hint_depth)
+        self.hint_depth.setValue(result.hint_depth)
+
+        logger.info("set engine_depth %s", result.engine_depth)
+        self.engine_depth.setValue(result.engine_depth)
+
     @QtCore.Slot(None)
     def save(self):
         import json
@@ -134,8 +160,77 @@ class Settings(QtWidgets.QDialog):
         )
 
 
+class Comments(QtWidgets.QDialog):
+
+    def __init__(self, parent=None):
+        super().__init__(parent)
+
+        self.ui = comments.Ui_Dialog()
+        self.ui.setupUi(self)
+
+        # 去掉标题栏问号
+        flags = QtCore.Qt.Dialog
+        flags |= QtCore.Qt.WindowCloseButtonHint
+        self.setWindowFlags(flags)
+
+        # 设置标题
+        self.setWindowTitle("着法")
+
+        self.font = QtGui.QFont()
+        self.font.setFamilies([u"DengXian"])
+        self.font.setPointSize(14)
+
+        self.red_style = QtGui.QBrush(QtGui.QColor(255, 0, 0, 255))
+        self.black_style = QtGui.QBrush(QtGui.QColor(0, 0, 0, 255))
+
+        self.signal = Signal(self)
+        self.signal.refresh.connect(self.update)
+
+    def update(self):
+        super().update()
+        engine = self.engine
+        var = 0
+        for index, sit in enumerate(engine.stack):
+            if sit.moves:
+                comment = sit.get_comment(engine.stack[index - 1].board, sit.fpos, sit.tpos)
+            else:
+                comment = "开始"
+
+            # logger.debug(comment)
+            item = self.ui.comments.item(var)
+
+            if not item:
+                item = QtWidgets.QListWidgetItem(self.ui.comments)
+
+            item.setTextAlignment(Qt.AlignCenter)
+            item.setFont(self.font)
+            item.setFlags(Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+
+            if sit.turn == Chess.BLACK:
+                item.setForeground(self.red_style)
+            else:
+                item.setForeground(self.black_style)
+
+            item.setText(comment)
+            var += 1
+
+        current = self.ui.comments.item(self.engine.index)
+        self.ui.comments.setCurrentItem(current)
+
+        while True:
+            # item = self.ui.comments.item(var)
+            item = self.ui.comments.takeItem(var)
+            if not item:
+                break
+
+    def refresh(self, engine: Engine):
+        self.engine = engine
+        self.signal.refresh.emit()
+
+
 def main():
     app = QtWidgets.QApplication()
+    # window = Comments()
     window = Settings()
     window._test_signal()
     window.loads()

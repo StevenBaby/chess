@@ -7,12 +7,16 @@ build: src/main.py
 		--add-data 'src/audios;audios' \
 		-F -w --name chess-$(VERSION)
 
+.PHONY: main
+main: ui
+	python src/main.py
 
-src/ui/settings.py: src/ui/settings.ui
+
+src/ui/%.py: src/ui/%.ui
 	PySide2-uic $< -o $@
 
 .PHONY:ui
-ui: src/ui/settings.py
+ui: src/ui/settings.py src/ui/comments.py
 
 VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
 
@@ -23,4 +27,6 @@ clean:
 	rm -rf build/*
 	rm -rf build
 	rm -rf *.spec
+	rm -rf .qt_for_python/*/*
+	rm -rf .qt_for_python/*
 	rm -rf .qt_for_python

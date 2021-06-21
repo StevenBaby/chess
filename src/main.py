@@ -9,7 +9,6 @@ from PySide2 import QtCore
 from PySide2 import QtGui
 
 from board import BoardFrame
-from settings import Settings
 
 from engine import Engine
 from engine import UCCIEngine
@@ -19,6 +18,10 @@ from engine import logger
 
 import audio
 import system
+from version import VERSION
+
+from dialog import Settings
+from dialog import Comments
 
 
 class GameSignal(QtCore.QObject):
@@ -33,10 +36,11 @@ class GameSignal(QtCore.QObject):
     save = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
-    difficulty = QtCore.Signal(int)
+
     checkmate = QtCore.Signal(None)
     animate = QtCore.Signal(tuple, tuple)
     settings = QtCore.Signal(None)
+    comments = QtCore.Signal(None)
 
 
 class ContextMenuMixin(QtWidgets.QWidget):
@@ -49,10 +53,11 @@ class ContextMenuMixin(QtWidgets.QWidget):
         ['重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit()],
         ['重置', 'Ctrl+N', lambda self: self.signal.reset.emit()],
         'separator',
+        ['着法', 'Ctrl+M', lambda self: self.signal.comments.emit()],
         ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
         ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
         'separator',
-        ['设置', '', lambda self: self.signal.settings.emit()],
+        ['设置', 'Ctrl+,', lambda self: self.signal.settings.emit()],
     ]
 
     if system.DEBUG:
@@ -105,19 +110,19 @@ class ContextMenuMixin(QtWidgets.QWidget):
                 self.context_menu.addSeparator()
                 continue
 
-        self.difficulty_menu = QtWidgets.QMenu(self, title="难度")
-        action = self.difficulty_menu.menuAction()
-        action.setFont(self.font_families)
-        self.context_menu.addAction(action)
+        # self.difficulty_menu = QtWidgets.QMenu(self, title="难度")
+        # action = self.difficulty_menu.menuAction()
+        # action.setFont(self.font_families)
+        # self.context_menu.addAction(action)
 
-        for diff in range(self.max_difficulty):
-            difficulty = diff + 1
-            action = QtWidgets.QAction(str(difficulty), self)
-            action.setFont(self.font_families)
-            action.setCheckable(True)
-            self.difficulty_menu.addAction(action)
+        # for diff in range(self.max_difficulty):
+        #     difficulty = diff + 1
+        #     action = QtWidgets.QAction(str(difficulty), self)
+        #     action.setFont(self.font_families)
+        #     action.setCheckable(True)
+        #     self.difficulty_menu.addAction(action)
 
-            action.triggered.connect(partial(self.signal.difficulty.emit, difficulty))
+        #     action.triggered.connect(partial(self.signal.difficulty.emit, difficulty))
 
     @QtCore.Slot(int)
     def show_difficulty(self, diff):
@@ -154,6 +159,8 @@ class Game(BoardFrame, ContextMenuMixin):
         super().__init__(parent=parent)
         ContextMenuMixin.__init__(self)
 
+        self.setWindowTitle(f"中国象棋 v{VERSION}")
+
         if not hasattr(self, 'signal'):
             self.signal = GameSignal()
 
@@ -173,11 +180,7 @@ class Game(BoardFrame, ContextMenuMixin):
             lambda e: audio.play(Chess.MOVE) if e else None
         )
 
-        self.settings.delay.valueChanged.connect(
-            lambda e: setattr(self, 'delay', e / 1000)
-        )
-
-        self.settings.buttonBox.accepted.connect(self.accepted)
+        self.settings.ok.clicked.connect(self.accepted)
         self.settings.loads()
 
         self.signal.settings.connect(self.settings.show)
@@ -197,8 +200,6 @@ class Game(BoardFrame, ContextMenuMixin):
         self.signal.save.connect(self.save)
 
         self.signal.move.connect(self.play)
-        self.signal.difficulty.connect(self.change_difficulty)
-        self.signal.difficulty.connect(self.show_difficulty)
 
         self.signal.checkmate.connect(self.checkmateMessage)
 
@@ -206,17 +207,28 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.signal.hint.emit(False)
 
-        self.delay = 0.3
-        self.depth_computer = 1
-        self.depth_hint = 7
-
         self.engine_side = [Chess.BLACK]
         self.human_side = [Chess.RED]
 
         audio.init()
         self.reset()
 
+        self.comments = Comments(self)
+        self.comments.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
+        # self.signal.comments.connect()
+        self.signal.comments.connect(lambda: [self.comments.refresh(self.engine), self.comments.show()])
+        self.signal.undo.connect(lambda: self.comments.refresh(self.engine))
+        self.signal.redo.connect(lambda: self.comments.refresh(self.engine))
+        self.signal.move.connect(lambda: self.comments.refresh(self.engine))
+        self.comments.ui.comments.itemClicked.connect(self.comments_changed)
+        self.comments.refresh(self.engine)
+
         self.accepted()
+
+    def comments_changed(self, item: QtWidgets.QListWidgetItem):
+        index = self.comments.ui.comments.indexFromItem(item).row()
+        self.engine.set_index(index)
+        self.updateBoard()
 
     def accepted(self):
         logger.info("setting accepted....")
@@ -239,7 +251,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
     def try_engine_move(self):
         if self.engine.sit.turn in self.engine_side:
-            self.engine.go(depth=self.depth_computer)
+            self.engine.go(depth=self.settings.engine_depth.value())
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -258,7 +270,6 @@ class Game(BoardFrame, ContextMenuMixin):
 
         self.signal.move.emit(Chess.NEWGAME)
 
-        self.signal.difficulty.emit(self.depth_computer)
         self.updateBoard()
         self.board.setCheck(None)
         self.try_engine_move()
@@ -288,12 +299,12 @@ class Game(BoardFrame, ContextMenuMixin):
     @QtCore.Slot(bool)
     def hint(self, hint=True):
         if hint:
-            self.engine.go(depth=self.depth_hint)
+            self.engine.go(depth=self.settings.hint_depth.value())
 
     @QtCore.Slot(None)
     def debug(self):
         logger.debug("debug slot.....")
-        logger.debug(self.engine.sit.format_fen())
+        # logger.debug(self.engine.sit.format_fen())
 
     @QtCore.Slot(None)
     def save(self):
@@ -385,7 +396,7 @@ class Game(BoardFrame, ContextMenuMixin):
             QtWidgets.QMessageBox(self).information(self, '信息', '红方胜!!!')
 
     def engine_callback(self, move_type, fpos, tpos):
-        time.sleep(self.delay)
+        time.sleep(self.settings.delay.value() / 1000)
         self.signal.hint.emit(False)
         if move_type == Chess.MOVE:
             self.move(fpos, tpos)
@@ -410,6 +421,13 @@ class Game(BoardFrame, ContextMenuMixin):
 
 def main():
     app = QtWidgets.QApplication(sys.argv)
+
+    # import qt_material as material
+    # extra = {
+    #     'font_family': "dengxian SumHei"
+    # }
+    # material.apply_stylesheet(app, theme='light_blue.xml', invert_secondary=True, extra=extra)
+
     window = Game()
     window.show()
     sys.exit(app.exec_())
