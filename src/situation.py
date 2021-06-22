@@ -1,4 +1,12 @@
+'''
+(C) Copyright 2021 Steven;
+@author: Steven kangweibaby@163.com
+@date: 2021-06-22
+用于局面 以及 走法生成 的数据结构
+'''
+
 # coding=utf-8
+
 import copy
 import re
 import itertools

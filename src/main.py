@@ -22,6 +22,7 @@ from version import VERSION
 
 from dialog import Settings
 from dialog import Comments
+from toast import Toast
 
 
 class GameSignal(QtCore.QObject):
@@ -182,6 +183,8 @@ class Game(BoardFrame, ContextMenuMixin):
         audio.init()
         self.reset()
 
+        self.toast = Toast(self)
+
         self.comments = Comments(self)
         self.comments.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
         # self.signal.comments.connect()
@@ -311,7 +314,7 @@ class Game(BoardFrame, ContextMenuMixin):
                     break
             self.updateBoard()
         else:
-            QtWidgets.QMessageBox().warning(self, 'Warning', 'Load file failure!!!')
+            self.toast.message("加载文件失败")
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
@@ -361,9 +364,11 @@ class Game(BoardFrame, ContextMenuMixin):
         if not self.engine.checkmate:
             return
         if self.engine.sit.turn == Chess.RED:
-            QtWidgets.QMessageBox(self).warning(self, '信息', '黑方胜!!!')
+            self.toast.message("黑方胜!!!")
+            # QtWidgets.QMessageBox(self).warning(self, '信息', '')
         else:
-            QtWidgets.QMessageBox(self).information(self, '信息', '红方胜!!!')
+            self.toast.message("红方胜!!!")
+            # QtWidgets.QMessageBox(self).information(self, '信息', '红方胜!!!')
 
     def engine_callback(self, move_type, fpos, tpos):
         time.sleep(self.settings.delay.value() / 1000)
