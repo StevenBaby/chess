@@ -149,17 +149,7 @@ class Settings(QtWidgets.QDialog):
         webbrowser.open(UPDATE_URL)
 
     def _test_signal(self):
-        self.ui.buttonBox.accepted.connect(lambda: print('accepted'))
-        self.ui.buttonBox.accepted.connect(lambda: print('accepted'))
-        self.ui.buttonBox.rejected.connect(lambda: print('rejected'))
-        self.ui.transprancy.valueChanged.connect(
-            lambda e: (print(e), self.setWindowOpacity((100 - e) / 100)))
-        self.reverse.stateChanged.connect(
-            lambda e: print(e)
-        )
-        self.audio.stateChanged.connect(
-            lambda e: print(e)
-        )
+        pass
 
 
 class Comments(QtWidgets.QDialog):
@@ -187,6 +177,24 @@ class Comments(QtWidgets.QDialog):
 
         self.signal = Signal(self)
         self.signal.refresh.connect(self.update)
+
+    def event(self, e):
+        if e.type() != QtCore.QEvent.NonClientAreaMouseButtonDblClick:
+            return super().event(e)
+        if not self.parentWidget():
+            return super().event(e)
+        parent = self.parentWidget()
+
+        geometry = QtCore.QRect(
+            self.geometry().x(),
+            parent.geometry().y(),
+            self.geometry().width(),
+            parent.geometry().height()
+        )
+
+        self.setGeometry(geometry)
+
+        return super().event(e)
 
     def update(self):
         super().update()
@@ -232,10 +240,10 @@ class Comments(QtWidgets.QDialog):
 
 def main():
     app = QtWidgets.QApplication()
-    # window = Comments()
-    window = Settings()
-    window._test_signal()
-    window.loads()
+    window = Comments()
+    # window = Settings()
+    # window._test_signal()
+    # window.loads()
     window.show()
     app.exec_()
 
