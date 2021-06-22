@@ -309,7 +309,6 @@ class Game(BoardFrame, ContextMenuMixin):
                 if result == Chess.CHECKMATE:
                     self.signal.checkmate.emit()
                     break
-
             self.updateBoard()
         else:
             QtWidgets.QMessageBox().warning(self, 'Warning', 'Load file failure!!!')

@@ -344,6 +344,8 @@ class Situation(Generator, Comment):
         if not match.group(5):
             return True
 
+        self.moves = []
+
         moves = match.group(5).strip().split()
         for move in moves:
             fpos, tpos = self.parse_move(move)
