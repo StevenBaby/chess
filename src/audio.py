@@ -39,6 +39,8 @@ def play(audio_type):
         audio = AUDIO_INVALID
     elif audio_type == Chess.NEWGAME:
         audio = AUDIO_NEW_GAME
+    elif audio_type == Chess.CHECKMATE:
+        audio = AUDIO_CHECK
     else:
         return
 
