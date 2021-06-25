@@ -1,5 +1,6 @@
 # coding=utf-8
 
+from logging import FATAL
 import sys
 import time
 from functools import partial
@@ -24,6 +25,11 @@ from dialog import Settings
 from dialog import Comments
 from toast import Toast
 
+from context import BaseContextMenu
+from context import BaseContextMenuWidget
+
+from arrange import ArrangeBoard
+
 
 class GameSignal(QtCore.QObject):
 
@@ -42,11 +48,10 @@ class GameSignal(QtCore.QObject):
     animate = QtCore.Signal(tuple, tuple)
     settings = QtCore.Signal(None)
     comments = QtCore.Signal(None)
+    arrange = QtCore.Signal(None)
 
 
-class ContextMenuMixin(QtWidgets.QWidget):
-
-    max_difficulty = 7
+class GameContextMenu(BaseContextMenu):
 
     items = [
         ['提示', 'Ctrl+H', lambda self: self.signal.hint.emit(True)],
@@ -54,6 +59,7 @@ class ContextMenuMixin(QtWidgets.QWidget):
         ['重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit()],
         ['重置', 'Ctrl+N', lambda self: self.signal.reset.emit()],
         'separator',
+        ['布局', 'Ctrl+A', lambda self: self.signal.arrange.emit()],
         ['着法', 'Ctrl+M', lambda self: self.signal.comments.emit()],
         ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
         ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
@@ -69,72 +75,24 @@ class ContextMenuMixin(QtWidgets.QWidget):
             ]
         )
 
-    def __init__(self, parent=None):
-        if not hasattr(self, 'signal'):
-            self.signal = GameSignal()
-
-        self.font_families = QtGui.QFont()
-        self.font_families.setFamilies([u"DengXian"])
-        self.font_families.setPointSize(12)
-        self.shortcuts = []
-        self.menus = []
-
-    def createShortCut(self):
-        for item in self.items:
-            if isinstance(item, list) and len(item) == 3:
-                name, key, slot = item
-                if not key:
-                    continue
-                shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key), self)
-                shortcut.activated.connect(partial(slot, self))
-                self.shortcuts.append(shortcut)
-
-    def createContextMenu(self):
-        self.createShortCut()
-        self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
-        self.customContextMenuRequested.connect(self.showContextMenu)
-
-        self.context_menu = QtWidgets.QMenu(self, title="菜单")
-
-        for item in self.items:
-            if isinstance(item, list) and len(item) == 3:
-                name, key, slot = item
-                action = QtWidgets.QAction(name, self)
-                action.setFont(self.font_families)
-                action.setShortcut(key)
-                action.triggered.connect(partial(slot, self))
-                self.context_menu.addAction(action)
-
-                logger.info(f"add action {len(self.context_menu.actions())} {name}")
-                continue
-            if item == "separator":
-                self.context_menu.addSeparator()
-                continue
-
-    def showContextMenu(self, pos):
-        self.context_menu.move(QtGui.QCursor().pos())
-        self.context_menu.show()
-
     @QtCore.Slot(bool)
     def contextHint(self, hint=True):
-        self.context_menu.actions()[0].setEnabled(not hint)
+        self.actions()[0].setEnabled(not hint)
         self.shortcuts[0].setEnabled(not hint)
 
 
-class Game(BoardFrame, ContextMenuMixin):
+class Game(BoardFrame, BaseContextMenuWidget):
 
     ELEEYE = dirpath / 'engines/eleeye/eleeye.exe'
 
     def __init__(self, parent=None):
-        super().__init__(parent=parent)
-        ContextMenuMixin.__init__(self)
-
+        super().__init__(parent, board_class=ArrangeBoard)
         self.setWindowTitle(f"中国象棋 v{VERSION}")
+        self.setupContextMenu()
 
-        if not hasattr(self, 'signal'):
-            self.signal = GameSignal()
+        self.game_signal = GameSignal()
 
-        self.createContextMenu()
+        self.game_menu = GameContextMenu(self, self.game_signal)
 
         self.settings = Settings(self)
         self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
@@ -153,32 +111,35 @@ class Game(BoardFrame, ContextMenuMixin):
         self.settings.ok.clicked.connect(self.accepted)
         self.settings.loads()
 
-        self.signal.settings.connect(self.settings.show)
+        self.game_signal.settings.connect(self.settings.show)
 
         self.board.csize = 80
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
 
-        self.signal.hint.connect(self.contextHint)
-        self.signal.hint.connect(self.hint)
-        self.signal.undo.connect(self.undo)
-        self.signal.redo.connect(self.redo)
-        self.signal.reset.connect(self.reset)
-        self.signal.debug.connect(self.debug)
+        self.game_signal.hint.connect(self.game_menu.contextHint)
+        self.game_signal.hint.connect(self.hint)
+        self.game_signal.undo.connect(self.undo)
+        self.game_signal.redo.connect(self.redo)
+        self.game_signal.reset.connect(self.reset)
+        self.game_signal.debug.connect(self.debug)
 
-        self.signal.load.connect(self.load)
-        self.signal.save.connect(self.save)
+        self.game_signal.load.connect(self.load)
+        self.game_signal.save.connect(self.save)
 
-        self.signal.move.connect(self.play)
+        self.game_signal.move.connect(self.play)
 
-        self.signal.checkmate.connect(self.checkmateMessage)
+        self.game_signal.checkmate.connect(self.checkmateMessage)
 
-        self.signal.animate.connect(self.animate)
+        self.game_signal.animate.connect(self.animate)
 
-        self.signal.hint.emit(False)
+        self.game_signal.hint.emit(False)
 
         self.engine_side = [Chess.BLACK]
         self.human_side = [Chess.RED]
+
+        self.game_signal.arrange.connect(self.arrange)
+        self.board.signal.finish.connect(self.finish_arrange)
 
         audio.init()
         self.reset()
@@ -188,14 +149,35 @@ class Game(BoardFrame, ContextMenuMixin):
         self.comments = Comments(self)
         self.comments.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
         # self.signal.comments.connect()
-        self.signal.comments.connect(lambda: [self.comments.refresh(self.engine), self.comments.show()])
-        self.signal.undo.connect(lambda: self.comments.refresh(self.engine))
-        self.signal.redo.connect(lambda: self.comments.refresh(self.engine))
-        self.signal.move.connect(lambda: self.comments.refresh(self.engine))
+        self.game_signal.comments.connect(lambda: [self.comments.refresh(self.engine), self.comments.show()])
+        self.game_signal.undo.connect(lambda: self.comments.refresh(self.engine))
+        self.game_signal.redo.connect(lambda: self.comments.refresh(self.engine))
+        self.game_signal.move.connect(lambda: self.comments.refresh(self.engine))
         self.comments.ui.comments.currentItemChanged.connect(self.comments_changed)
         self.comments.refresh(self.engine)
 
         self.accepted()
+
+    def show_context_menu(self, point):
+        if self.board.arranging:
+            return self.board.arrange_menu.exec_(self.mapToGlobal(point))
+        self.game_menu.exec_(self.mapToGlobal(point))
+
+    def arrange(self):
+        self.board.arranging = True
+
+    def finish_arrange(self, finished):
+        if not finished:
+            return
+        logger.debug('finish arrange')
+        self.engine.close()
+        self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
+        self.engine.start()
+
+        self.engine.sit.board = self.board.board
+        self.engine.sit.turn = self.board.first_side
+        self.engine.sit.fen = self.engine.sit.format_current_fen()
+        self.try_engine_move()
 
     def comments_changed(self, item: QtWidgets.QListWidgetItem):
         index = self.comments.ui.comments.indexFromItem(item).row()
@@ -241,8 +223,9 @@ class Game(BoardFrame, ContextMenuMixin):
         self.engine.start()
 
         self.fpos = None
+        self.board.arranging = False
 
-        self.signal.move.emit(Chess.NEWGAME)
+        self.game_signal.move.emit(Chess.NEWGAME)
 
         self.updateBoard()
         self.board.setCheck(None)
@@ -255,7 +238,7 @@ class Game(BoardFrame, ContextMenuMixin):
             if self.engine.sit.turn in self.human_side:
                 break
 
-        self.signal.hint.emit(False)
+        self.game_signal.hint.emit(False)
         self.updateBoard()
 
     @QtCore.Slot(None)
@@ -263,11 +246,11 @@ class Game(BoardFrame, ContextMenuMixin):
         for _ in range(2):
             self.engine.redo()
             logger.debug('engine redo result %d', self.engine.sit.result)
-            self.signal.move.emit(self.engine.sit.result)
+            self.game_signal.move.emit(self.engine.sit.result)
             if self.engine.sit.turn in self.human_side:
                 break
 
-        self.signal.hint.emit(False)
+        self.game_signal.hint.emit(False)
         self.updateBoard()
 
     @QtCore.Slot(bool)
@@ -310,7 +293,7 @@ class Game(BoardFrame, ContextMenuMixin):
             for fpos, tpos in moves:
                 result = self.engine.move(fpos, tpos)
                 if result == Chess.CHECKMATE:
-                    self.signal.checkmate.emit()
+                    self.game_signal.checkmate.emit()
                     break
             self.updateBoard()
         else:
@@ -322,7 +305,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
     def move(self, fpos, tpos):
         if self.engine.checkmate:
-            self.signal.checkmate.emit()
+            self.game_signal.checkmate.emit()
             return
 
         result = self.engine.move(fpos, tpos)
@@ -331,7 +314,7 @@ class Game(BoardFrame, ContextMenuMixin):
             return
 
         if result != Chess.INVALID:
-            self.signal.animate.emit(fpos, tpos)
+            self.game_signal.animate.emit(fpos, tpos)
 
         if self.engine.sit.check:
             self.board.setCheck(self.engine.sit.check)
@@ -339,11 +322,11 @@ class Game(BoardFrame, ContextMenuMixin):
         else:
             self.board.setCheck(None)
 
-        self.signal.move.emit(result)
+        self.game_signal.move.emit(result)
 
         if result == Chess.CHECKMATE:
             logger.debug("emit checkmate")
-            self.signal.checkmate.emit()
+            self.game_signal.checkmate.emit()
             return
 
         self.try_engine_move()
@@ -372,7 +355,7 @@ class Game(BoardFrame, ContextMenuMixin):
 
     def engine_callback(self, move_type, fpos, tpos):
         time.sleep(self.settings.delay.value() / 1000)
-        self.signal.hint.emit(False)
+        self.game_signal.hint.emit(False)
         if move_type == Chess.MOVE:
             self.move(fpos, tpos)
         # if move_type == Chess.CHECKMATE:

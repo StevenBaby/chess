@@ -29,7 +29,7 @@ import system
 dirpath = system.get_dirpath()
 
 
-class Signal(QtCore.QObject):
+class BoardSignal(QtCore.QObject):
 
     refresh = QtCore.Signal(None)
 
@@ -65,6 +65,8 @@ class Board(QLabel):
     ANIMATION_DURATION = 280
 
     flags = QtCore.Qt.WindowMinimizeButtonHint | QtCore.Qt.WindowCloseButtonHint
+
+    signal_class = BoardSignal
 
     def __init__(self, parent=None, callback=None):
         super().__init__(parent=parent)
@@ -120,7 +122,7 @@ class Board(QLabel):
         self.mark3.setScaledContents(True)
         self.mark3.setVisible(False)
 
-        self.signal = Signal()
+        self.signal = self.signal_class()
         self.signal.refresh.connect(self.refresh)
 
         self.labels = mat(zeros((Chess.W, Chess.H,)), dtype=QtWidgets.QLabel)
@@ -315,9 +317,9 @@ class Board(QLabel):
 
 class BoardFrame(QtWidgets.QFrame):
 
-    def __init__(self, parent=None):
+    def __init__(self, parent=None, board_class=Board):
         super().__init__(parent)
-        self.board = Board(self)
+        self.board = board_class(self)
         # self.setWindowOpacity(0.85)
         if parent is None:
             self.setWindowIcon(QtGui.QIcon(self.board.FAVICON))

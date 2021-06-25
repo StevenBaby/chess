@@ -68,6 +68,8 @@ class Chess(object):
         k: 'k',
     }
 
+    CHESSES = {P, R, N, B, A, C, K, p, r, n, b, a, c, k, }
+
     @staticmethod
     def invert(chess):
         # 转换棋子颜色

@@ -247,7 +247,7 @@ class Generator(object):
 class Situation(Generator, Comment):
 
     def __init__(self, board: np.array = None, turn=Chess.RED, moves=None, bout=1, idle=0):
-        if not board:
+        if board is None:
             self.board = copy.deepcopy(Chess.ORIGIN)
         else:
             self.board = board

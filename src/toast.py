@@ -33,7 +33,7 @@ class Toast(QtWidgets.QWidget):
         border = size
 
         height = size + border * 2
-        width = size * len(self.text) + border * 2
+        width = size * len(self.text) * 2 + border * 2
 
         if not self.parentWidget():
             screen = QtGui.QGuiApplication.primaryScreen()
