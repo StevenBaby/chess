@@ -9,7 +9,6 @@
 import numpy as np
 
 from chess import Chess
-from logger import logger
 
 
 class Comment(object):
@@ -31,7 +30,18 @@ class Comment(object):
         Chess.k: '將',
     }
 
-    nums = ['零', '一', '二', '三', '四', '五', '六', '七', '八', '九']
+    nums = [
+        '零',
+        '一',
+        '二',
+        '三',
+        '四',
+        '五',
+        '六',
+        '七',
+        '八',
+        '九'
+    ]
 
     def get_name(self, chess):
         if not chess:
@@ -84,6 +94,7 @@ class Comment(object):
 
     def get_comment(self, board, fpos, tpos):
         chess = board[fpos]
+
         name = self.get_name(chess)
         pos = self.get_pos(chess, fpos)
         action = self.get_action(chess, fpos, tpos)
@@ -112,38 +123,34 @@ class Comment(object):
             return comment
 
         # 以下为卒的情况
-        elif len(chesses) > 3:  # 单列棋子数量大于 3 个
-            pos = 1
-            for idx, var in enumerate(chesses):
-                if var == fpos:
-                    pos = idx + 1
-                    break
-            pos = self.nums[pos]
-            return f'{pos}{name}{action}'
 
-        pawns = self.get_pawns(board, chess)
-        if len(pawns) == 2:
-            return comment
-
-        # 棋盘棋子数量大于两个
-
+        wheres = np.argwhere(board == chess)
+        
         columns = {}
 
-        for pos in pawns:
-            columns.setdefault(pos[0], 0)
-            columns[pos[0]] += 1
+        for where in wheres:
+            columns.setdefault(where[0], 0)
+            columns[where[0]] += 1
 
         for var in list(columns.keys()):
             if columns[var] == 1:
                 del columns[var]
 
-        if len(chesses) == 3 and len(columns) == 1:
-            if fpos == chesses[0]:
+        if len(columns) == 1:
+
+            idx = 1
+            for where in chesses:
+                if fpos == where:
+                    break
+                idx += 1
+
+            if idx == 1:
                 pos = '前'
-            elif fpos == chesses[1]:
+            elif idx == 2 and len(chesses) == 3:
                 pos = '中'
             else:
                 pos = '后'
+
             return f'{pos}{name}{action}'
 
         # 两列的情况
@@ -164,9 +171,10 @@ class Comment(object):
                 if board[pos] != chess:
                     continue
                 index += 1
-                if fpos == pos:
-                    pos = self.nums[index]
-                    return f'{pos}{name}{action}'
+                if fpos != pos:
+                    continue
+                pos = self.nums[index]
+                return f'{pos}{name}{action}'
 
         # 理论上不可能到这里
-        raise Exception('get comment error')
+        raise Exception('格式化着法失败')
