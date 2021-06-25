@@ -54,16 +54,28 @@ class PositionValidator(object):
             return False
         return True
 
-    def validatePawn(self, pos):
+    def validatePawn(self, board, pos, chess):
         if pos[1] > 4:
             return True
         if pos[1] < 3:
             return False
-        if pos[0] % 2 == 0:
-            return True
-        return False
+        if pos[0] % 2 != 0:
+            return False
 
-    def validatePosition(self, pos, chess):
+        if Chess.is_black(chess):
+            if board[(pos[0], 3)] == chess:
+                return False
+            if board[(pos[0], 4)] == chess:
+                return False
+        else:
+            if board[(8 - pos[0], 5)] == chess:
+                return False
+            if board[(8 - pos[0], 6)] == chess:
+                return False
+
+        return True
+
+    def validatePosition(self, board, pos, chess):
         ctype = chess & Chess.CMASK
         if ctype in {Chess.ROOK, Chess.KNIGHT, Chess.CANNON}:
             return True
@@ -77,7 +89,7 @@ class PositionValidator(object):
         if ctype == Chess.BISHOP:
             return self.validateBishop(pos)
         if ctype == Chess.PAWN:
-            return self.validatePawn(pos)
+            return self.validatePawn(board, pos, chess)
         return False
 
     def validateArrange(self, board):
@@ -277,7 +289,7 @@ class ArrangeBoard(Board, PositionValidator):
         for chess in Chess.CHESSES:
             wheres = np.argwhere(self.board == chess)
             origin = np.argwhere(Chess.ORIGIN == chess)
-            if len(wheres) < len(origin) and self.validatePosition(pos, chess):
+            if len(wheres) < len(origin) and self.validatePosition(self.board, pos, chess):
                 chesses.append(chess)
         if not chesses:
             return
