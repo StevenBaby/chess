@@ -31,6 +31,10 @@ class BaseContextMenu(QtWidgets.QMenu):
         self.createShortCut()
         self.createContextMenu()
 
+    def setAllShortcutEnabled(self, enable: bool):
+        for shortcut in self.shortcuts:
+            shortcut.setEnabled(enable)
+
     def createShortCut(self):
         for item in self.items:
             if isinstance(item, list) and len(item) == 3:

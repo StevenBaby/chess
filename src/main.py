@@ -165,6 +165,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     def arrange(self):
         self.board.arranging = True
+        self.game_menu.setAllShortcutEnabled(False)
 
     def finish_arrange(self, finished):
         if not finished:
@@ -178,6 +179,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.engine.sit.turn = self.board.first_side
         self.engine.sit.fen = self.engine.sit.format_current_fen()
         self.try_engine_move()
+        self.game_menu.setAllShortcutEnabled(True)
 
     def comments_changed(self, item: QtWidgets.QListWidgetItem):
         index = self.comments.ui.comments.indexFromItem(item).row()
