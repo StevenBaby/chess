@@ -125,7 +125,7 @@ class Comment(object):
         # 以下为卒的情况
 
         wheres = np.argwhere(board == chess)
-        
+
         columns = {}
 
         for where in wheres:
