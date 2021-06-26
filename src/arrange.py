@@ -129,10 +129,10 @@ class ArrangeSignal(BoardSignal):
 class ArrangeContextMenu(BaseContextMenu):
 
     items = [
-        ['红方先行', '', lambda self: self.signal.side.emit(Chess.RED)],
-        ['黑方先行', '', lambda self: self.signal.side.emit(Chess.BLACK)],
+        ('红方先行', '', lambda self: self.signal.side.emit(Chess.RED), True),
+        ('黑方先行', '', lambda self: self.signal.side.emit(Chess.BLACK), True),
         'separator',
-        ['完成布局', '', lambda self: self.signal.finish.emit(False)],
+        ('完成布局', '', lambda self: self.signal.finish.emit(False), True),
     ]
 
 

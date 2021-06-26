@@ -44,8 +44,8 @@ class Settings(QtWidgets.QDialog):
         self.checkupdate = self.ui.checkupdate
         self.audio = self.ui.audio
         self.delay = self.ui.delay
-        self.hint_depth = self.ui.hint_depth
-        self.engine_depth = self.ui.engine_depth
+        self.red_depth = self.ui.red_depth
+        self.black_depth = self.ui.black_depth
 
         self.version.setText(f"v{VERSION}")
         self.checkupdate.clicked.connect(self.check_update)
@@ -82,8 +82,8 @@ class Settings(QtWidgets.QDialog):
         data.redside = 0
         data.blackside = 0
         data.delay = 300
-        data.hint_depth = 7
-        data.engine_depth = 1
+        data.red_depth = 7
+        data.black_depth = 1
         return data
 
     def get_current(self):
@@ -95,8 +95,8 @@ class Settings(QtWidgets.QDialog):
         data.redside = self.redside.currentIndex()
         data.blackside = self.blackside.currentIndex()
         data.delay = self.delay.value()
-        data.hint_depth = self.hint_depth.value()
-        data.engine_depth = self.engine_depth.value()
+        data.red_depth = self.red_depth.value()
+        data.black_depth = self.black_depth.value()
         return data
 
     def set_settings(self, settings):
@@ -124,13 +124,13 @@ class Settings(QtWidgets.QDialog):
             logger.info("set delay %s", settings.delay)
             self.delay.setValue(settings.delay)
 
-        if self.hint_depth.value() != settings.hint_depth:
-            logger.info("set hint_depth %s", settings.hint_depth)
-            self.hint_depth.setValue(settings.hint_depth)
+        if self.red_depth.value() != settings.red_depth:
+            logger.info("set red_depth %s", settings.red_depth)
+            self.red_depth.setValue(settings.red_depth)
 
-        if self.engine_depth.value() != settings.engine_depth:
-            logger.info("set engine_depth %s", settings.engine_depth)
-            self.engine_depth.setValue(settings.engine_depth)
+        if self.black_depth.value() != settings.black_depth:
+            logger.info("set black_depth %s", settings.black_depth)
+            self.black_depth.setValue(settings.black_depth)
 
     def loads(self):
         import json
@@ -260,8 +260,8 @@ class Comments(QtWidgets.QDialog):
 
 def main():
     app = QtWidgets.QApplication()
-    window = Comments()
-    # window = Settings()
+    # window = Comments()
+    window = Settings()
     # window._test_signal()
     # window.loads()
     window.show()

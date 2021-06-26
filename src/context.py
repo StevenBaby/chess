@@ -15,7 +15,8 @@ from logger import logger
 class BaseContextMenu(QtWidgets.QMenu):
 
     items = [
-        ['测试', 'Ctrl+A', lambda self: print(self)],
+        # 名称, 快捷键, 执行的函数, 是否可屏蔽
+        ['测试', 'Ctrl+A', lambda self: print(self), True],
         'separator',
     ]
 
@@ -25,37 +26,49 @@ class BaseContextMenu(QtWidgets.QMenu):
         self.font_families = QtGui.QFont()
         self.font_families.setFamilies([u"DengXian"])
         self.font_families.setPointSize(12)
-        self.shortcuts = []
-        self.menus = []
+        self.all_shortcuts = []
+        self.disabled_shortcuts = []
+
+        self.disabled_actions = []
+        self.all_actions = []
+
         self.setTitle('菜单')
         self.createShortCut()
         self.createContextMenu()
 
     def setAllShortcutEnabled(self, enable: bool):
-        for shortcut in self.shortcuts:
+        for shortcut in self.disabled_shortcuts:
             shortcut.setEnabled(enable)
+
+    def setAllMenuEnabled(self, enable: bool):
+        for action in self.disabled_actions:
+            action.setEnabled(enable)
 
     def createShortCut(self):
         for item in self.items:
-            if isinstance(item, list) and len(item) == 3:
-                name, key, slot = item
+            if len(item) == 4:
+                name, key, slot, disabled = item
                 if not key:
                     continue
                 logger.info(f"add shortcut {name}")
                 shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key), self.parentWidget())
                 shortcut.activated.connect(partial(slot, self))
-                self.shortcuts.append(shortcut)
+                self.all_shortcuts.append(shortcut)
+                if disabled:
+                    self.disabled_actions.append(shortcut)
 
     def createContextMenu(self):
         for item in self.items:
-            if isinstance(item, list) and len(item) == 3:
-                name, key, slot = item
+            if len(item) == 4:
+                name, key, slot, disabled = item
                 action = QtWidgets.QAction(name, self)
                 action.setFont(self.font_families)
                 action.setShortcut(key)
                 action.triggered.connect(partial(slot, self))
                 self.addAction(action)
-
+                self.all_actions.append(action)
+                if disabled:
+                    self.disabled_actions.append(action)
                 logger.info(f"add action {len(self.actions())} {name}")
                 continue
             if item == "separator":

@@ -17,13 +17,12 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(416, 348)
+        Dialog.resize(446, 348)
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.gridLayout = QGridLayout()
+        self.gridLayout.setSpacing(20)
         self.gridLayout.setObjectName(u"gridLayout")
-        self.gridLayout.setHorizontalSpacing(10)
-        self.gridLayout.setVerticalSpacing(20)
         self.redside = QComboBox(Dialog)
         self.redside.addItem("")
         self.redside.addItem("")
@@ -111,13 +110,13 @@ class Ui_Dialog(object):
 
         self.gridLayout.addWidget(self.label_7, 4, 0, 1, 1)
 
-        self.hint_depth = QSpinBox(Dialog)
-        self.hint_depth.setObjectName(u"hint_depth")
-        self.hint_depth.setFont(font)
-        self.hint_depth.setMaximum(10)
-        self.hint_depth.setValue(7)
+        self.red_depth = QSpinBox(Dialog)
+        self.red_depth.setObjectName(u"red_depth")
+        self.red_depth.setFont(font)
+        self.red_depth.setMaximum(10)
+        self.red_depth.setValue(7)
 
-        self.gridLayout.addWidget(self.hint_depth, 3, 1, 1, 1)
+        self.gridLayout.addWidget(self.red_depth, 3, 1, 1, 1)
 
         self.label_4 = QLabel(Dialog)
         self.label_4.setObjectName(u"label_4")
@@ -133,13 +132,13 @@ class Ui_Dialog(object):
 
         self.gridLayout.addWidget(self.label_8, 3, 0, 1, 1)
 
-        self.engine_depth = QSpinBox(Dialog)
-        self.engine_depth.setObjectName(u"engine_depth")
-        self.engine_depth.setFont(font)
-        self.engine_depth.setMaximum(10)
-        self.engine_depth.setValue(1)
+        self.black_depth = QSpinBox(Dialog)
+        self.black_depth.setObjectName(u"black_depth")
+        self.black_depth.setFont(font)
+        self.black_depth.setMaximum(10)
+        self.black_depth.setValue(1)
 
-        self.gridLayout.addWidget(self.engine_depth, 3, 3, 1, 1)
+        self.gridLayout.addWidget(self.black_depth, 3, 3, 1, 1)
 
         self.delay = QSpinBox(Dialog)
         self.delay.setObjectName(u"delay")
@@ -198,7 +197,7 @@ class Ui_Dialog(object):
         self.label_3.setText(QCoreApplication.translate("Dialog", u"\u7ea2\u65b9", None))
         self.label_2.setText(QCoreApplication.translate("Dialog", u"\u53cd\u8f6c\u68cb\u76d8", None))
         self.label_5.setText(QCoreApplication.translate("Dialog", u"\u7248\u672c\u53f7", None))
-        self.label_9.setText(QCoreApplication.translate("Dialog", u"\u5f15\u64ce\u6df1\u5ea6", None))
+        self.label_9.setText(QCoreApplication.translate("Dialog", u"\u9ed1\u65b9\u6df1\u5ea6", None))
         self.version.setText(QCoreApplication.translate("Dialog", u"1.1.0", None))
         self.blackside.setItemText(0, QCoreApplication.translate("Dialog", u"\u7535\u8111", None))
         self.blackside.setItemText(1, QCoreApplication.translate("Dialog", u"\u68cb\u624b", None))
@@ -206,7 +205,7 @@ class Ui_Dialog(object):
         self.reverse.setText("")
         self.label_7.setText(QCoreApplication.translate("Dialog", u"\u5f15\u64ce\u5ef6\u8fdf", None))
         self.label_4.setText(QCoreApplication.translate("Dialog", u"\u9ed1\u65b9", None))
-        self.label_8.setText(QCoreApplication.translate("Dialog", u"\u63d0\u793a\u6df1\u5ea6", None))
+        self.label_8.setText(QCoreApplication.translate("Dialog", u"\u7ea2\u65b9\u6df1\u5ea6", None))
         self.audio.setText("")
         self.label.setText(QCoreApplication.translate("Dialog", u"\u900f\u660e\u5ea6", None))
         self.cancel.setText(QCoreApplication.translate("Dialog", u"\u53d6\u6d88", None))

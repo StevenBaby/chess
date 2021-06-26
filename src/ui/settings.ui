@@ -6,7 +6,7 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>416</width>
+    <width>446</width>
     <height>348</height>
    </rect>
   </property>
@@ -16,10 +16,7 @@
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
     <layout class="QGridLayout" name="gridLayout">
-     <property name="horizontalSpacing">
-      <number>10</number>
-     </property>
-     <property name="verticalSpacing">
+     <property name="spacing">
       <number>20</number>
      </property>
      <item row="2" column="1">
@@ -115,7 +112,7 @@
         </font>
        </property>
        <property name="text">
-        <string>引擎深度</string>
+        <string>黑方深度</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -207,7 +204,7 @@
       </widget>
      </item>
      <item row="3" column="1">
-      <widget class="QSpinBox" name="hint_depth">
+      <widget class="QSpinBox" name="red_depth">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -247,7 +244,7 @@
         </font>
        </property>
        <property name="text">
-        <string>提示深度</string>
+        <string>红方深度</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -255,7 +252,7 @@
       </widget>
      </item>
      <item row="3" column="3">
-      <widget class="QSpinBox" name="engine_depth">
+      <widget class="QSpinBox" name="black_depth">
        <property name="font">
         <font>
          <family>DengXian</family>

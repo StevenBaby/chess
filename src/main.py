@@ -1,6 +1,5 @@
 # coding=utf-8
 
-from logging import FATAL
 import sys
 import time
 from functools import partial
@@ -34,7 +33,7 @@ from manual import Manual
 
 class GameSignal(QtCore.QObject):
 
-    hint = QtCore.Signal(bool)
+    hint = QtCore.Signal(None)
     undo = QtCore.Signal(None)
     redo = QtCore.Signal(None)
     reset = QtCore.Signal(None)
@@ -50,36 +49,32 @@ class GameSignal(QtCore.QObject):
     settings = QtCore.Signal(None)
     comments = QtCore.Signal(None)
     arrange = QtCore.Signal(None)
+    thinking = QtCore.Signal(bool)
 
 
 class GameContextMenu(BaseContextMenu):
 
     items = [
-        ['提示', 'Ctrl+H', lambda self: self.signal.hint.emit(True)],
-        ['悔棋', 'Ctrl+Z', lambda self: self.signal.undo.emit()],
-        ['重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit()],
-        ['重置', 'Ctrl+N', lambda self: self.signal.reset.emit()],
+        ('提示', 'Ctrl+H', lambda self: self.signal.hint.emit(), True),
+        ('悔棋', 'Ctrl+Z', lambda self: self.signal.undo.emit(), True),
+        ('重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit(), True),
+        ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
         'separator',
-        ['布局', 'Ctrl+A', lambda self: self.signal.arrange.emit()],
-        ['着法', 'Ctrl+M', lambda self: self.signal.comments.emit()],
-        ['载入', 'Ctrl+O', lambda self: self.signal.load.emit()],
-        ['保存', 'Ctrl+S', lambda self: self.signal.save.emit()],
+        ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
+        ('着法', 'Ctrl+M', lambda self: self.signal.comments.emit(), True),
+        ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
+        ('保存', 'Ctrl+S', lambda self: self.signal.save.emit(), True),
         'separator',
-        ['设置', 'Ctrl+,', lambda self: self.signal.settings.emit()],
+        ('设置', 'Ctrl+,', lambda self: self.signal.settings.emit(), False),
     ]
 
     if system.DEBUG:
         items.extend(
             [
-                ['调试', 'Ctrl+D', lambda self: self.signal.debug.emit()],
+                ('调试', 'Ctrl+D', lambda self: self.signal.debug.emit(), False),
                 'separator',
             ]
         )
-
-    @QtCore.Slot(bool)
-    def contextHint(self, hint=True):
-        self.actions()[0].setEnabled(not hint)
-        self.shortcuts[0].setEnabled(not hint)
 
 
 class Game(BoardFrame, BaseContextMenuWidget):
@@ -92,6 +87,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.setupContextMenu()
 
         self.game_signal = GameSignal()
+
+        self.game_signal.thinking.connect(self.set_thinking)
 
         self.game_menu = GameContextMenu(self, self.game_signal)
 
@@ -118,7 +115,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
 
-        self.game_signal.hint.connect(self.game_menu.contextHint)
         self.game_signal.hint.connect(self.hint)
         self.game_signal.undo.connect(self.undo)
         self.game_signal.redo.connect(self.redo)
@@ -133,8 +129,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.checkmate.connect(self.checkmateMessage)
 
         self.game_signal.animate.connect(self.animate)
-
-        self.game_signal.hint.emit(False)
 
         self.engine_side = [Chess.BLACK]
         self.human_side = [Chess.RED]
@@ -163,6 +157,28 @@ class Game(BoardFrame, BaseContextMenuWidget):
         if self.board.arranging:
             return self.board.arrange_menu.exec_(self.mapToGlobal(point))
         self.game_menu.exec_(self.mapToGlobal(point))
+
+    def update_action_state(self):
+        if len(self.engine_side) == 2:
+            self.game_menu.setAllMenuEnabled(False)
+            self.game_menu.setAllShortcutEnabled(False)
+        elif self.thinking:
+            self.game_menu.setAllMenuEnabled(False)
+            self.game_menu.setAllShortcutEnabled(False)
+        else:
+            self.game_menu.setAllMenuEnabled(True)
+            self.game_menu.setAllShortcutEnabled(True)
+
+    def set_thinking(self, thinking):
+        self.thinking = thinking
+        logger.debug("set thinking %s", self.thinking)
+        if len(self.engine_side) == 2:
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
+        elif self.thinking:
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
+        else:
+            QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.ArrowCursor)
+        self.update_action_state()
 
     def arrange(self):
         self.board.arranging = True
@@ -212,12 +228,18 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.comments.ui.comments.setEnabled(False)
         else:
             self.comments.ui.comments.setEnabled(True)
+        self.update_action_state()
 
         self.try_engine_move()
 
     def try_engine_move(self):
-        if self.engine.sit.turn in self.engine_side:
-            self.engine.go(depth=self.settings.engine_depth.value())
+        if self.engine.sit.turn not in self.engine_side:
+            return
+        self.game_signal.thinking.emit(True)
+        if self.engine.sit.turn == Chess.RED:
+            self.engine.go(depth=self.settings.red_depth.value())
+        else:
+            self.engine.go(depth=self.settings.black_depth.value())
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -234,7 +256,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.fpos = None
         self.board.arranging = False
-
+        self.thinking = False
         self.game_signal.move.emit(Chess.NEWGAME)
 
         self.updateBoard()
@@ -248,7 +270,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
             if self.engine.sit.turn in self.human_side:
                 break
 
-        self.game_signal.hint.emit(False)
         self.updateBoard()
 
     @QtCore.Slot(None)
@@ -260,13 +281,18 @@ class Game(BoardFrame, BaseContextMenuWidget):
             if self.engine.sit.turn in self.human_side:
                 break
 
-        self.game_signal.hint.emit(False)
         self.updateBoard()
 
     @QtCore.Slot(bool)
-    def hint(self, hint=True):
-        if hint:
-            self.engine.go(depth=self.settings.hint_depth.value())
+    def hint(self):
+        if self.thinking:
+            logger.debug('engine is thinking hint ignored...')
+            return
+        self.game_signal.thinking.emit(True)
+        if self.engine.sit.turn == Chess.RED:
+            self.engine.go(depth=self.settings.red_depth.value())
+        else:
+            self.engine.go(depth=self.settings.black_depth.value())
 
     @QtCore.Slot(None)
     def debug(self):
@@ -334,6 +360,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.board.move(self.engine.sit.board, fpos, tpos, self.updateBoard)
 
     def move(self, fpos, tpos):
+        self.game_signal.thinking.emit(False)
         if self.engine.checkmate:
             self.game_signal.checkmate.emit()
             return
@@ -385,7 +412,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     def engine_callback(self, move_type, fpos, tpos):
         time.sleep(self.settings.delay.value() / 1000)
-        self.game_signal.hint.emit(False)
         if move_type == Chess.MOVE:
             self.move(fpos, tpos)
         # if move_type == Chess.CHECKMATE:
