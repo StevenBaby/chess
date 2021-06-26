@@ -64,6 +64,11 @@ class Settings(QtWidgets.QDialog):
 
         self.ui.ok.clicked.connect(self.hide)
         self.ui.cancel.clicked.connect(self.hide)
+        self.ui.cancel.clicked.connect(lambda: self.set_settings(self.backup))
+
+    def show(self):
+        self.backup = self.get_current()
+        super().show()
 
     def get_filename(self):
         return os.path.join(system.get_execpath(), 'settings.json')
@@ -81,52 +86,7 @@ class Settings(QtWidgets.QDialog):
         data.engine_depth = 1
         return data
 
-    def loads(self):
-        import json
-        filename = self.get_filename()
-        result = self.get_default()
-
-        if not os.path.exists(filename):
-            return
-
-        with open(filename, encoding='utf8') as file:
-            source = file.read()
-
-        try:
-            data = json.loads(source)
-            data = attrdict.loads(data)
-            result.update(data)
-        except Exception:
-            return
-
-        logger.info("set transprancy %s", result.transprancy)
-        self.transprancy.setValue(result.transprancy)
-
-        logger.info("set reverse %s", result.reverse)
-        self.reverse.setChecked(result.reverse)
-
-        logger.info("set audio %s", result.audio)
-        self.audio.setChecked(result.audio)
-
-        logger.info("set redside %s", result.redside)
-        self.redside.setCurrentIndex(result.redside)
-
-        logger.info("set blackside %s", result.blackside)
-        self.blackside.setCurrentIndex(result.blackside)
-
-        logger.info("set delay %s", result.delay)
-        self.delay.setValue(result.delay)
-
-        logger.info("set hint_depth %s", result.hint_depth)
-        self.hint_depth.setValue(result.hint_depth)
-
-        logger.info("set engine_depth %s", result.engine_depth)
-        self.engine_depth.setValue(result.engine_depth)
-
-    @QtCore.Slot(None)
-    def save(self):
-        import json
-
+    def get_current(self):
         data = self.get_default()
         data.version = VERSION
         data.transprancy = self.transprancy.value()
@@ -137,6 +97,66 @@ class Settings(QtWidgets.QDialog):
         data.delay = self.delay.value()
         data.hint_depth = self.hint_depth.value()
         data.engine_depth = self.engine_depth.value()
+        return data
+
+    def set_settings(self, settings):
+        if self.transprancy.value() != settings.transprancy:
+            logger.info("set transprancy %s", settings.transprancy)
+            self.transprancy.setValue(settings.transprancy)
+
+        if self.reverse.isChecked() != settings.reverse:
+            logger.info("set reverse %s", settings.reverse)
+            self.reverse.setChecked(settings.reverse)
+
+        if self.audio.isChecked() != settings.audio:
+            logger.info("set audio %s", settings.audio)
+            self.audio.setChecked(settings.audio)
+
+        if self.redside.currentIndex() != settings.redside:
+            logger.info("set redside %s", settings.redside)
+            self.redside.setCurrentIndex(settings.redside)
+
+        if self.blackside.currentIndex() != settings.blackside:
+            logger.info("set blackside %s", settings.blackside)
+            self.blackside.setCurrentIndex(settings.blackside)
+
+        if self.delay.value() != settings.delay:
+            logger.info("set delay %s", settings.delay)
+            self.delay.setValue(settings.delay)
+
+        if self.hint_depth.value() != settings.hint_depth:
+            logger.info("set hint_depth %s", settings.hint_depth)
+            self.hint_depth.setValue(settings.hint_depth)
+
+        if self.engine_depth.value() != settings.engine_depth:
+            logger.info("set engine_depth %s", settings.engine_depth)
+            self.engine_depth.setValue(settings.engine_depth)
+
+    def loads(self):
+        import json
+        filename = self.get_filename()
+        settings = self.get_default()
+
+        if not os.path.exists(filename):
+            return
+
+        with open(filename, encoding='utf8') as file:
+            source = file.read()
+
+        try:
+            data = json.loads(source)
+            data = attrdict.loads(data)
+            settings.update(data)
+        except Exception:
+            return
+
+        self.set_settings(settings)
+
+    @QtCore.Slot(None)
+    def save(self):
+        import json
+
+        data = self.get_current()
 
         logger.info("save settings %s", data)
 
