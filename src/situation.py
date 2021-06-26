@@ -194,7 +194,7 @@ class Generator(object):
         if not board[where]:
             return []
 
-        chess = self.board[where] & Chess.CMASK
+        chess = board[where] & Chess.CMASK
         if chess == Chess.ROOK:
             return self.generate_rook(board, where, turn)
         if chess == Chess.KNIGHT:
@@ -222,7 +222,7 @@ class Generator(object):
         chesses = np.argwhere((board & Chess.invert(turn)) != 0)
 
         for chess in chesses:
-            steps = self.generate(board, tuple(chess), Chess.invert(self.turn))
+            steps = self.generate(board, tuple(chess), Chess.invert(turn))
             valid = [var for var in steps if var == king]
             if valid:
                 return tuple(chess)

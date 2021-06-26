@@ -17,6 +17,7 @@ from chess import Chess
 from logger import logger
 from context import BaseContextMenu
 from toast import Toast
+from situation import Generator
 
 
 class PositionValidator(object):
@@ -92,7 +93,7 @@ class PositionValidator(object):
             return self.validatePawn(board, pos, chess)
         return False
 
-    def validateArrange(self, board):
+    def validateArrange(self, board, turn):
         whereK = np.argwhere(board == Chess.K)
         if len(whereK) == 0:
             raise Exception('布局中不能没有帅')
@@ -107,8 +108,16 @@ class PositionValidator(object):
             if not board[pos]:
                 continue
             if board[pos] != Chess.K:
-                return
+                break
             raise Exception('将帅不能见面')
+
+        generator = Generator()
+        check = generator.get_check(board, Chess.invert(turn))
+        logger.debug("get check %s", check)
+        if check:
+            raise Exception('处于将死的状态')
+        if generator.is_checkmate(board, turn):
+            raise Exception('处于将死的状态')
 
 
 class ArrangeSignal(BoardSignal):
@@ -249,11 +258,12 @@ class ArrangeBoard(Board, PositionValidator):
         if finished:
             return
         try:
-            self.validateArrange(self.board)
+            self.validateArrange(self.board, self.first_side)
         except Exception as e:
             logger.debug(e)
             self.toast.message(str(e))
             return
+
         self.arranging = False
         self.signal.finish.emit(True)
 
