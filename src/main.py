@@ -165,6 +165,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     def arrange(self):
         self.board.arranging = True
+        self.board.setBoard(self.board.board)
+        self.board.setCheck(None)
         self.game_menu.setAllShortcutEnabled(False)
 
     def finish_arrange(self, finished):
