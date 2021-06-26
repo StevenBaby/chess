@@ -13,8 +13,8 @@ from PySide2.QtCore import Qt
 
 
 class Toast(QtWidgets.QWidget):
-    BACKGROUND_COLOR = QtGui.QColor("#33000000")
-    FOREGROUND_COLOR = QtGui.QColor("#db2828")
+    BACKGROUND_COLOR = QtGui.QColor("#11000000")
+    FOREGROUND_COLOR = QtGui.QColor("#333333")
 
     font = QtGui.QFont('dengxian', 18)
 

@@ -131,6 +131,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.move.connect(self.play)
 
         self.game_signal.checkmate.connect(self.checkmateMessage)
+        self.game_signal.checkmate.connect(lambda: self.set_thinking(False))
 
         self.game_signal.animate.connect(self.animate)
 
@@ -341,6 +342,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.engine.index = 0
         self.engine.stack = self.engine.stack[:1]
         self.engine.sit = self.engine.stack[0]
+        self.updateBoard()
+        self.board.setCheck(None)
 
         if self.engine.sit.parse_fen(fen, load=True):
             moves = self.engine.sit.moves
