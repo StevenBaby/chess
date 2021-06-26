@@ -29,6 +29,7 @@ from context import BaseContextMenu
 from context import BaseContextMenuWidget
 
 from arrange import ArrangeBoard
+from manual import Manual
 
 
 class GameSignal(QtCore.QObject):
@@ -281,7 +282,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         if not filename:
             return
         fen = self.engine.sit.format_fen()
-        with open(filename, 'w') as file:
+        with open(filename, 'w', encoding='utf8') as file:
             file.write(fen)
         logger.info("save file %s - fen %s", filename, fen)
 
@@ -290,11 +291,27 @@ class Game(BoardFrame, BaseContextMenuWidget):
         dialog = QtWidgets.QFileDialog(self)
         dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
         filename = dialog.getOpenFileName(
-            self, "打开中国象棋文件 Fen", ".", "文件 (*.fen)")[0]
+            self, "打开中国象棋文件 Fen", ".", "fen 文件 (*.fen);;txt 文件 (*.txt)")[0]
         if not filename:
             return
-        with open(filename, 'r') as file:
-            fen = file.read()
+        with open(filename, 'r', encoding='utf8') as file:
+            content = file.read()
+
+        if filename.endswith('.txt'):
+            manual = Manual()
+            try:
+                manual.callback = lambda fpos, tpos: self.board.setBoard(
+                    manual.sit.board,
+                    manual.sit.fpos,
+                    manual.sit.tpos
+                )
+                manual.parse(content)
+            except Exception as e:
+                self.toast.message(str(e))
+                return
+            fen = manual.sit.format_fen()
+        else:
+            fen = content
 
         if self.engine.sit.parse_fen(fen, load=True):
             moves = self.engine.sit.moves

@@ -24,7 +24,7 @@ class Toast(QtWidgets.QWidget):
         self.setAttribute(QtCore.Qt.WA_TranslucentBackground)
 
         self.painter = None
-        self.timeout = 1
+        self.timeout = 2
         self.text = ''
         self.pen = QtGui.QPen(QtGui.QColor(self.FOREGROUND_COLOR))
 
