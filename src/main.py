@@ -205,6 +205,11 @@ class Game(BoardFrame, BaseContextMenuWidget):
         else:
             self.human_side.append(Chess.BLACK)
 
+        if len(self.engine_side) == 2:
+            self.comments.ui.comments.setEnabled(False)
+        else:
+            self.comments.ui.comments.setEnabled(True)
+
         self.try_engine_move()
 
     def try_engine_move(self):
