@@ -292,6 +292,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         if self.thinking:
             logger.debug('engine is thinking hint ignored...')
             return
+        if self.engine.checkmate:
+            self.game_signal.checkmate.emit()
+            logger.debug('engine is checkmated hint ignored...')
+            return
         self.game_signal.thinking.emit(True)
         if self.engine.sit.turn == Chess.RED:
             self.engine.go(depth=self.settings.red_depth.value())
