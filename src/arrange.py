@@ -288,6 +288,7 @@ class ArrangeBoard(Board, PositionValidator):
         if self.board[pos]:
             self.board[pos] = 0
             self.signal.refresh.emit()
+            self.selector.hide()
             return
 
         if self.selector.isVisible():
