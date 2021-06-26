@@ -41,6 +41,7 @@ class GameSignal(QtCore.QObject):
 
     load = QtCore.Signal(None)
     save = QtCore.Signal(None)
+    paste = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
 
@@ -58,10 +59,12 @@ class GameContextMenu(BaseContextMenu):
         ('提示', 'Ctrl+H', lambda self: self.signal.hint.emit(), True),
         ('悔棋', 'Ctrl+Z', lambda self: self.signal.undo.emit(), True),
         ('重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit(), True),
-        ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
         'separator',
+        ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
         ('着法', 'Ctrl+M', lambda self: self.signal.comments.emit(), True),
+        'separator',
+        ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
         ('保存', 'Ctrl+S', lambda self: self.signal.save.emit(), True),
         'separator',
@@ -123,6 +126,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.load.connect(self.load)
         self.game_signal.save.connect(self.save)
+        self.game_signal.paste.connect(self.paste)
 
         self.game_signal.move.connect(self.play)
 
@@ -309,21 +313,12 @@ class Game(BoardFrame, BaseContextMenuWidget):
             return
         fen = self.engine.sit.format_fen()
         with open(filename, 'w', encoding='utf8') as file:
+            file.write('fen ')
             file.write(fen)
         logger.info("save file %s - fen %s", filename, fen)
 
-    @QtCore.Slot(None)
-    def load(self):
-        dialog = QtWidgets.QFileDialog(self)
-        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
-        filename = dialog.getOpenFileName(
-            self, "打开中国象棋文件 Fen", ".", "fen 文件 (*.fen);;txt 文件 (*.txt)")[0]
-        if not filename:
-            return
-        with open(filename, 'r', encoding='utf8') as file:
-            content = file.read()
-
-        if filename.endswith('.txt'):
+    def pasre_content(self, content: str):
+        if not content.startswith('fen '):
             manual = Manual()
             try:
                 manual.callback = lambda fpos, tpos: self.board.setBoard(
@@ -337,7 +332,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
                 return
             fen = manual.sit.format_fen()
         else:
-            fen = content
+            fen = content[4:]
 
         self.engine.index = 0
         self.engine.stack = self.engine.stack[:1]
@@ -353,7 +348,24 @@ class Game(BoardFrame, BaseContextMenuWidget):
                     break
             self.updateBoard()
         else:
-            self.toast.message("加载文件失败")
+            self.toast.message("加载棋谱失败")
+
+    @QtCore.Slot(None)
+    def load(self):
+        dialog = QtWidgets.QFileDialog(self)
+        dialog.setFileMode(QtWidgets.QFileDialog.AnyFile)
+        filename = dialog.getOpenFileName(
+            self, "打开中国象棋文件 Fen", ".", "fen 文件 (*.fen);;txt 文件 (*.txt)")[0]
+        if not filename:
+            return
+        with open(filename, 'r', encoding='utf8') as file:
+            content = file.read()
+        self.pasre_content(content)
+
+    def paste(self):
+        content = QtWidgets.QApplication.clipboard().text()
+        logger.debug('Clipboard text %s', content)
+        self.pasre_content(content)
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
