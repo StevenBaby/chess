@@ -315,6 +315,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.engine.index = 0
         self.engine.stack = self.engine.stack[:1]
+        self.engine.sit = self.engine.stack[0]
 
         if self.engine.sit.parse_fen(fen, load=True):
             moves = self.engine.sit.moves
