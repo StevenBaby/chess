@@ -426,7 +426,7 @@ class Situation(Generator, Method):
         if not self.validate_move(self.board, fpos, tpos):
             return False
 
-        logger.info("get comment %s", self.get_comment(self.board, fpos, tpos))
+        logger.info("get method %s", self.get_method(self.board, fpos, tpos))
 
         board = copy.deepcopy(self.board)
         board[tpos] = board[fpos]

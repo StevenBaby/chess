@@ -223,12 +223,11 @@ class Method(QtWidgets.QDialog):
         var = 0
         for index, sit in enumerate(engine.stack):
             if sit.moves:
-                comment = sit.get_comment(engine.stack[index - 1].board, sit.fpos, sit.tpos)
-                comment = f'{index:03} {comment}'
+                method = sit.get_method(engine.stack[index - 1].board, sit.fpos, sit.tpos)
+                method = f'{index:03} {method}'
             else:
-                comment = "棋局开始"
+                method = "棋局开始"
 
-            # logger.debug(comment)
             item = self.list.item(var)
 
             if not item:
@@ -243,7 +242,7 @@ class Method(QtWidgets.QDialog):
             else:
                 item.setForeground(self.black_style)
 
-            item.setText(comment)
+            item.setText(method)
             var += 1
 
         current = self.list.item(self.engine.index)

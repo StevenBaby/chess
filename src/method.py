@@ -92,21 +92,21 @@ class Method(object):
         wheres = np.argwhere(board == chess)
         return wheres
 
-    def get_comment(self, board, fpos, tpos):
+    def get_method(self, board, fpos, tpos):
         chess = board[fpos]
 
         name = self.get_name(chess)
         pos = self.get_pos(chess, fpos)
         action = self.get_action(chess, fpos, tpos)
 
-        comment = f'{name}{pos}{action}'
+        method = f'{name}{pos}{action}'
 
         if Chess.chess(chess) not in {Chess.ROOK, Chess.KNIGHT, Chess.CANNON, Chess.PAWN}:
-            return comment
+            return method
 
         chesses = self.get_column_chess(board, fpos)
         if len(chesses) == 1:
-            return comment
+            return method
 
         # 同一列棋子多于一个
         if Chess.is_black(chess):
@@ -117,10 +117,10 @@ class Method(object):
         else:
             pos = '后'
 
-        comment = f'{pos}{name}{action}'
+        method = f'{pos}{name}{action}'
 
         if Chess.chess(chess) in {Chess.ROOK, Chess.KNIGHT, Chess.CANNON}:
-            return comment
+            return method
 
         # 以下为卒的情况
 
