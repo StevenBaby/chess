@@ -296,6 +296,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.engine.redo()
             logger.debug('engine redo result %d', self.engine.sit.result)
             self.game_signal.move.emit(self.engine.sit.result)
+            if self.engine.checkmate:
+                self.game_signal.checkmate.emit()
             if self.engine.sit.turn in self.human_side:
                 break
 
