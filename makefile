@@ -1,11 +1,30 @@
+VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
 
 .PHONY: build
-build: src/main.py
+build: dist/chess-$(VERSION).exe dist/chess.exe
+	-
+
+dist/chess-$(VERSION).exe: src/main.py
 	pyinstaller $< -i src/images/favicon.ico \
 		--add-data 'src/images;images' \
 		--add-data 'src/engines;engines' \
 		--add-data 'src/audios;audios' \
 		-F -w --name chess-$(VERSION)
+
+dist/chess.exe: dist/chess-$(VERSION).exe
+	cp $< $@
+
+.PHONY: debug
+debug: dist/chess-$(VERSION)-debug.exe
+	-
+
+dist/chess-$(VERSION)-debug.exe: src/main.py
+	pyinstaller $< -i src/images/favicon.ico \
+		--add-data 'src/images;images' \
+		--add-data 'src/engines;engines' \
+		--add-data 'src/audios;audios' \
+		-F --name chess-$(VERSION)-debug 
+	cp $@ dist/chess.exe
 
 .PHONY: main
 main: ui
@@ -17,9 +36,6 @@ src/ui/%.py: src/ui/%.ui
 
 .PHONY:ui
 ui: src/ui/settings.py src/ui/comments.py
-
-VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
-
 
 .PHONY: clean
 clean:

@@ -162,6 +162,14 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.comments.refresh(self.engine)
 
         self.accepted()
+        self.check_openfile()
+
+    def check_openfile(self):
+        # 直接打开棋谱文件
+        if len(sys.argv) > 1:
+            with open(sys.argv[1], encoding='utf8') as file:
+                content = file.read()
+            self.pasre_content(content)
 
     def show_context_menu(self, point):
         if self.board.arranging:
