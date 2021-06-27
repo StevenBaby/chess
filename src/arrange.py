@@ -124,11 +124,13 @@ class ArrangeSignal(BoardSignal):
 
     side = QtCore.Signal(int)
     finish = QtCore.Signal(bool)
+    clear = QtCore.Signal(None)
 
 
 class ArrangeContextMenu(BaseContextMenu):
 
     items = [
+        ('清空棋盘', '', lambda self: self.signal.clear.emit(), True),
         ('红方先行', '', lambda self: self.signal.side.emit(Chess.RED), True),
         ('黑方先行', '', lambda self: self.signal.side.emit(Chess.BLACK), True),
         'separator',
@@ -251,6 +253,7 @@ class ArrangeBoard(Board, PositionValidator):
 
         self.signal.finish.connect(self.finishArrange)
         self.signal.side.connect(self.changeSide)
+        self.signal.clear.connect(self.newBoard)
 
         self.toast = Toast(parent)
 
