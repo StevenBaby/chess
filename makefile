@@ -5,12 +5,12 @@ build: dist/chess-$(VERSION).exe dist/chess.exe
 	-
 
 dist/chess-$(VERSION).exe: src/main.py
-	python -c "from src import version; version.increase();"
 	pyinstaller $< -i src/images/favicon.ico \
 		--add-data 'src/images;images' \
 		--add-data 'src/engines;engines' \
 		--add-data 'src/audios;audios' \
 		-F -w --name chess-$(VERSION)
+	python -c "from src import version; version.increase();"
 
 dist/chess.exe: dist/chess-$(VERSION).exe
 	cp $< $@
