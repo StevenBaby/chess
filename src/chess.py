@@ -111,3 +111,7 @@ class Chess(object):
     CHECKMATE = 6
     RESIGN = 7
     NEWGAME = 8
+
+    # 以下为引擎专用
+    INFO = 9
+    POPHASH = 10

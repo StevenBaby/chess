@@ -44,8 +44,10 @@ class GameSignal(QtCore.QObject):
     paste = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
-
     checkmate = QtCore.Signal(None)
+    draw = QtCore.Signal(None)
+    resign = QtCore.Signal(None)
+
     animate = QtCore.Signal(tuple, tuple)
     settings = QtCore.Signal(None)
     comments = QtCore.Signal(None)
@@ -132,6 +134,9 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.checkmate.connect(self.checkmateMessage)
         self.game_signal.checkmate.connect(lambda: self.set_thinking(False))
+
+        self.game_signal.draw.connect(lambda: self.toast.message('和棋！！！'))
+        self.game_signal.resign.connect(lambda: self.toast.message('认输了！！！'))
 
         self.game_signal.animate.connect(self.animate)
 
@@ -429,12 +434,21 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.toast.message("红方胜!!!")
             # QtWidgets.QMessageBox(self).information(self, '信息', '红方胜!!!')
 
-    def engine_callback(self, move_type, fpos, tpos):
-        time.sleep(self.settings.delay.value() / 1000)
-        if move_type == Chess.MOVE:
-            self.move(fpos, tpos)
-        # if move_type == Chess.CHECKMATE:
-        #     self.signal.checkmate.emit()
+    def engine_callback(self, type, data):
+        if type == Chess.MOVE:
+            time.sleep(self.settings.delay.value() / 1000)
+            self.move(data[0], data[1])
+        elif type == Chess.INFO:
+            logger.debug(data)
+        elif type == Chess.POPHASH:
+            logger.debug(data)
+        elif type == Chess.DRAW:
+            self.game_signal.draw.emit()
+        elif type == Chess.RESIGN:
+            self.game_signal.resign.emit()
+        elif type == Chess.CHECKMATE:
+            pass
+            # self.signal.checkmate.emit()
 
     def board_callback(self, pos):
         if self.engine.sit.where_turn(pos) == self.engine.sit.turn:

@@ -75,6 +75,9 @@ class Engine(threading.Thread):
     ENGINE_IDLE = 1
     ENGINE_BUSY = 2
 
+    ENGINE_MOVE = 3
+    ENGINE_INFO = 4
+
     def __init__(self):
         super().__init__(daemon=True)
         self.name = 'EngineThread'
@@ -86,6 +89,9 @@ class Engine(threading.Thread):
         self.index = 0
         self.running = False
 
+    def callback(self, type, data):
+        pass
+
     @property
     def checkmate(self):
         return self.sit.result == Chess.CHECKMATE
@@ -94,6 +100,9 @@ class Engine(threading.Thread):
         pass
 
     def close(self):
+        pass
+
+    def go(self, depth=3):
         pass
 
     def set_index(self, index):
@@ -444,42 +453,42 @@ class UCCIEngine(PipeEngine):
                 return
 
             if instruct == 'info':
-                # TODO info
+                if callable(self.callback):
+                    self.callback(Chess.INFO, line)
                 return
             if instruct == 'pophash':
-                # TODO pophash
+                if callable(self.callback):
+                    self.callback(Chess.POPHASH, line)
                 return
 
         self.state = self.ENGINE_IDLE
 
-        move_type = None
-        fpos = None
-        tpos = None
+        type = None
+        data = None
 
         if instruct == 'bestmove':
             moves = items[1].split()
-            move_type = Chess.MOVE
-            fpos, tpos = self.sit.parse_move(moves[0])
+            type = Chess.MOVE
+            data = self.sit.parse_move(moves[0])
 
             if len(items) > 2:
                 if items[2] == 'draw':
-                    move_type = Chess.DRAW
+                    type = Chess.DRAW
                 if items[2] == 'resign':
-                    move_type = Chess.RESIGN
+                    type = Chess.RESIGN
 
         elif instruct == 'nobestmove':
             self.running = False
             if self.sit.idle > 100:
-                move_type = Chess.DRAW
+                type = Chess.DRAW
             else:
-                move_type = Chess.CHECKMATE
-                # self.checkmate = True
+                type = Chess.CHECKMATE
         else:
             logger.warning(instruct)
             return
 
         if callable(self.callback):
-            self.callback(move_type, fpos, tpos)
+            self.callback(type, data)
 
 
 def main():
