@@ -1,10 +1,11 @@
-VERSION:= $(shell python -c "from src.version import VERSION; print(VERSION)")
+VERSION:= $(shell python -c "from src import version; print(version.VERSION) ")
 
 .PHONY: build
 build: dist/chess-$(VERSION).exe dist/chess.exe
 	-
 
 dist/chess-$(VERSION).exe: src/main.py
+	python -c "from src import version; version.increase();"
 	pyinstaller $< -i src/images/favicon.ico \
 		--add-data 'src/images;images' \
 		--add-data 'src/engines;engines' \
