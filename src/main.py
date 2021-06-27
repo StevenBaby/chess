@@ -155,9 +155,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.comments.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
         # self.signal.comments.connect()
         self.game_signal.comments.connect(lambda: [self.comments.refresh(self.engine), self.comments.show()])
-        self.game_signal.undo.connect(lambda: self.comments.refresh(self.engine))
-        self.game_signal.redo.connect(lambda: self.comments.refresh(self.engine))
-        self.game_signal.move.connect(lambda: self.comments.refresh(self.engine))
+
         self.comments.ui.comments.currentItemChanged.connect(self.comments_changed)
         self.comments.refresh(self.engine)
 
@@ -427,6 +425,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.depth_computer = diff
 
     def updateBoard(self):
+        if hasattr(self, 'comments'):
+            self.comments.signal.refresh.emit()
         self.board.setBoard(
             self.engine.sit.board,
             self.engine.sit.fpos,

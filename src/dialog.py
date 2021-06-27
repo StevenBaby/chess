@@ -62,8 +62,8 @@ class Settings(QtWidgets.QDialog):
 
         self.ui.ok.clicked.connect(self.save)
 
-        self.ui.ok.clicked.connect(self.hide)
-        self.ui.cancel.clicked.connect(self.hide)
+        self.ui.ok.clicked.connect(self.close)
+        self.ui.cancel.clicked.connect(self.close)
         self.ui.cancel.clicked.connect(lambda: self.set_settings(self.backup))
 
     def show(self):
@@ -223,8 +223,9 @@ class Comments(QtWidgets.QDialog):
         for index, sit in enumerate(engine.stack):
             if sit.moves:
                 comment = sit.get_comment(engine.stack[index - 1].board, sit.fpos, sit.tpos)
+                comment = f'{index:03} {comment}'
             else:
-                comment = "开始"
+                comment = "棋局开始"
 
             # logger.debug(comment)
             item = self.ui.comments.item(var)
