@@ -15,7 +15,7 @@ import numpy as np
 
 from chess import Chess
 from logger import logger
-from comment import Comment
+from method import Method
 
 
 class Generator(object):
@@ -244,7 +244,7 @@ class Generator(object):
         return True
 
 
-class Situation(Generator, Comment):
+class Situation(Generator, Method):
 
     def __init__(self, board: np.array = None, turn=Chess.RED, moves=None, bout=1, idle=0):
         if board is None:

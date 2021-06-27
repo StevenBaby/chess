@@ -15,7 +15,7 @@ from engine import Engine
 from chess import Chess
 
 from ui import settings
-from ui import comments
+from ui import method
 
 import system
 
@@ -172,13 +172,14 @@ class Settings(QtWidgets.QDialog):
         pass
 
 
-class Comments(QtWidgets.QDialog):
+class Method(QtWidgets.QDialog):
 
     def __init__(self, parent=None):
         super().__init__(parent)
 
-        self.ui = comments.Ui_Dialog()
+        self.ui = method.Ui_Dialog()
         self.ui.setupUi(self)
+        self.list = self.ui.listwidget
 
         # 去掉标题栏问号
         flags = QtCore.Qt.Dialog
@@ -228,10 +229,10 @@ class Comments(QtWidgets.QDialog):
                 comment = "棋局开始"
 
             # logger.debug(comment)
-            item = self.ui.comments.item(var)
+            item = self.list.item(var)
 
             if not item:
-                item = QtWidgets.QListWidgetItem(self.ui.comments)
+                item = QtWidgets.QListWidgetItem(self.list)
 
             item.setTextAlignment(Qt.AlignCenter)
             item.setFont(self.font)
@@ -245,12 +246,11 @@ class Comments(QtWidgets.QDialog):
             item.setText(comment)
             var += 1
 
-        current = self.ui.comments.item(self.engine.index)
-        self.ui.comments.setCurrentItem(current)
+        current = self.list.item(self.engine.index)
+        self.list.setCurrentItem(current)
 
         while True:
-            # item = self.ui.comments.item(var)
-            item = self.ui.comments.takeItem(var)
+            item = self.list.takeItem(var)
             if not item:
                 break
 
@@ -261,8 +261,8 @@ class Comments(QtWidgets.QDialog):
 
 def main():
     app = QtWidgets.QApplication()
-    # window = Comments()
-    window = Settings()
+    window = Method()
+    # window = Settings()
     # window._test_signal()
     # window.loads()
     window.show()

@@ -35,7 +35,7 @@ src/ui/%.py: src/ui/%.ui
 	PySide2-uic $< -o $@
 
 .PHONY:ui
-ui: src/ui/settings.py src/ui/comments.py
+ui: src/ui/settings.py src/ui/method.py
 
 .PHONY: clean
 clean:

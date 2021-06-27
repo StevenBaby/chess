@@ -33,7 +33,7 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item>
-    <widget class="QListWidget" name="comments">
+    <widget class="QListWidget" name="listwidget">
      <property name="font">
       <font>
        <family>DengXian</family>

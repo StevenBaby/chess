@@ -11,7 +11,7 @@ import numpy as np
 from chess import Chess
 
 
-class Comment(object):
+class Method(object):
 
     NAMES = {
         Chess.P: '兵',

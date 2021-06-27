@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 
 ################################################################################
-## Form generated from reading UI file 'comments.ui'
+## Form generated from reading UI file 'method.ui'
 ##
 ## Created by: Qt User Interface Compiler version 5.15.2
 ##
@@ -23,25 +23,25 @@ class Ui_Dialog(object):
         Dialog.setSizeIncrement(QSize(200, 0))
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
-        self.comments = QListWidget(Dialog)
+        self.listwidget = QListWidget(Dialog)
         brush = QBrush(QColor(255, 0, 0, 255))
         brush.setStyle(Qt.NoBrush)
         brush1 = QBrush(QColor(255, 0, 0, 255))
         brush1.setStyle(Qt.NoBrush)
-        __qlistwidgetitem = QListWidgetItem(self.comments)
+        __qlistwidgetitem = QListWidgetItem(self.listwidget)
         __qlistwidgetitem.setText(u"New Item");
         __qlistwidgetitem.setBackground(brush1);
         __qlistwidgetitem.setForeground(brush);
-        self.comments.setObjectName(u"comments")
+        self.listwidget.setObjectName(u"listwidget")
         font = QFont()
         font.setFamily(u"DengXian")
         font.setPointSize(14)
-        self.comments.setFont(font)
-        self.comments.setProperty("showDropIndicator", False)
-        self.comments.setSpacing(5)
-        self.comments.setViewMode(QListView.ListMode)
+        self.listwidget.setFont(font)
+        self.listwidget.setProperty("showDropIndicator", False)
+        self.listwidget.setSpacing(5)
+        self.listwidget.setViewMode(QListView.ListMode)
 
-        self.verticalLayout.addWidget(self.comments)
+        self.verticalLayout.addWidget(self.listwidget)
 
 
         self.retranslateUi(Dialog)
@@ -52,9 +52,9 @@ class Ui_Dialog(object):
     def retranslateUi(self, Dialog):
         Dialog.setWindowTitle(QCoreApplication.translate("Dialog", u"\u7740\u6cd5", None))
 
-        __sortingEnabled = self.comments.isSortingEnabled()
-        self.comments.setSortingEnabled(False)
-        self.comments.setSortingEnabled(__sortingEnabled)
+        __sortingEnabled = self.listwidget.isSortingEnabled()
+        self.listwidget.setSortingEnabled(False)
+        self.listwidget.setSortingEnabled(__sortingEnabled)
 
     # retranslateUi
 

@@ -21,7 +21,7 @@ import system
 from version import VERSION
 
 from dialog import Settings
-from dialog import Comments
+from dialog import Method
 from toast import Toast
 
 from context import BaseContextMenu
@@ -50,7 +50,7 @@ class GameSignal(QtCore.QObject):
 
     animate = QtCore.Signal(tuple, tuple)
     settings = QtCore.Signal(None)
-    comments = QtCore.Signal(None)
+    method = QtCore.Signal(None)
     arrange = QtCore.Signal(None)
     thinking = QtCore.Signal(bool)
 
@@ -64,7 +64,7 @@ class GameContextMenu(BaseContextMenu):
         'separator',
         ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
-        ('着法', 'Ctrl+M', lambda self: self.signal.comments.emit(), True),
+        ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), True),
         'separator',
         ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
@@ -151,13 +151,13 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.toast = Toast(self)
 
-        self.comments = Comments(self)
-        self.comments.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
-        # self.signal.comments.connect()
-        self.game_signal.comments.connect(lambda: [self.comments.refresh(self.engine), self.comments.show()])
+        self.method = Method(self)
+        self.method.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
 
-        self.comments.ui.comments.currentItemChanged.connect(self.comments_changed)
-        self.comments.refresh(self.engine)
+        self.game_signal.method.connect(lambda: [self.method.refresh(self.engine), self.method.show()])
+
+        self.method.list.currentItemChanged.connect(self.method_changed)
+        self.method.refresh(self.engine)
 
         self.accepted()
         self.check_openfile()
@@ -216,8 +216,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.try_engine_move()
         self.game_menu.setAllShortcutEnabled(True)
 
-    def comments_changed(self, item: QtWidgets.QListWidgetItem):
-        index = self.comments.ui.comments.indexFromItem(item).row()
+    def method_changed(self, item: QtWidgets.QListWidgetItem):
+        index = self.method.list.indexFromItem(item).row()
         self.engine.set_index(index)
         if self.board.animate.state() == QtCore.QAbstractAnimation.State.Running:
             return
@@ -241,9 +241,9 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.human_side.append(Chess.BLACK)
 
         if len(self.engine_side) == 2:
-            self.comments.ui.comments.setEnabled(False)
+            self.method.list.setEnabled(False)
         else:
-            self.comments.ui.comments.setEnabled(True)
+            self.method.list.setEnabled(True)
         self.update_action_state()
 
         self.try_engine_move()
@@ -425,8 +425,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.depth_computer = diff
 
     def updateBoard(self):
-        if hasattr(self, 'comments'):
-            self.comments.signal.refresh.emit()
+        if hasattr(self, 'method'):
+            self.method.signal.refresh.emit()
         self.board.setBoard(
             self.engine.sit.board,
             self.engine.sit.fpos,
