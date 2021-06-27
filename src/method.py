@@ -87,6 +87,8 @@ class Method(object):
 
         if Chess.chess(chess) in {Chess.ROOK, Chess.CANNON, Chess.PAWN, Chess.KING}:
             posy = self.CNUMS[abs(delta[1])]
+            if Chess.is_black(chess) and standard:
+                posy = self.ANUMS[abs(delta[1])]
         else:
             posy = posx
 
@@ -201,3 +203,7 @@ class Method(object):
 
         # 理论上不可能到这里
         raise Exception('格式化着法失败')
+
+
+if __name__ == '__main__':
+    print([chr(ord('０') + var) for var in range(0, 10)])
