@@ -91,35 +91,33 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.setWindowTitle(f"中国象棋 v{VERSION}")
         self.setupContextMenu()
 
-        self.game_signal = GameSignal()
+        audio.init()
 
-        self.game_signal.thinking.connect(self.set_thinking)
+        self.engine = None
 
-        self.game_menu = GameContextMenu(self, self.game_signal)
-
-        self.settings = Settings(self)
-        self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
-        self.settings.transprancy.valueChanged.connect(
-            lambda e: self.setWindowOpacity((100 - e) / 100)
-        )
-
-        self.settings.reverse.stateChanged.connect(
-            lambda e: self.board.setReverse(self.settings.reverse.isChecked())
-        )
-
-        self.settings.audio.stateChanged.connect(
-            lambda e: audio.play(Chess.MOVE) if e else None
-        )
-
-        self.settings.ok.clicked.connect(self.accepted)
-        self.settings.loads()
-
-        self.game_signal.settings.connect(self.settings.show)
+        self.engine_side = [Chess.BLACK]
+        self.human_side = [Chess.RED]
 
         self.board.csize = 80
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
 
+        self.game_signal = GameSignal()
+
+        self.method = Method(self)
+        self.method.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
+
+        self.settings = Settings(self)
+        self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
+
+        self.game_menu = GameContextMenu(self, self.game_signal)
+
+        self.toast = Toast(self)
+
+        # 以下初始化信号
+
+        self.game_signal.thinking.connect(self.set_thinking)
+        self.game_signal.settings.connect(self.settings.show)
         self.game_signal.hint.connect(self.hint)
         self.game_signal.undo.connect(self.undo)
         self.game_signal.redo.connect(self.redo)
@@ -140,25 +138,32 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.animate.connect(self.animate)
 
-        self.engine_side = [Chess.BLACK]
-        self.human_side = [Chess.RED]
+        self.settings.transprancy.valueChanged.connect(
+            lambda e: self.setWindowOpacity((100 - e) / 100)
+        )
+
+        self.settings.reverse.stateChanged.connect(
+            lambda e: self.board.setReverse(self.settings.reverse.isChecked())
+        )
+
+        self.settings.audio.stateChanged.connect(
+            lambda e: audio.play(Chess.MOVE) if e else None
+        )
+
+        self.settings.standard_method.stateChanged.connect(
+            lambda e: self.method.set_standard(e)
+        )
+
+        self.settings.ok.clicked.connect(self.accepted)
+        self.settings.loads()
 
         self.game_signal.arrange.connect(self.arrange)
         self.board.signal.finish.connect(self.finish_arrange)
 
-        audio.init()
-        self.reset()
-
-        self.toast = Toast(self)
-
-        self.method = Method(self)
-        self.method.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
-
-        self.game_signal.method.connect(lambda: [self.method.refresh(self.engine), self.method.show()])
-
+        self.game_signal.method.connect(self.method.show)
         self.method.list.currentItemChanged.connect(self.method_changed)
-        self.method.refresh(self.engine)
 
+        self.reset()
         self.accepted()
         self.check_openfile()
 
@@ -264,7 +269,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         audio.play(audio_type)
 
     def reset(self):
-        if hasattr(self, 'engine'):
+        if hasattr(self, 'engine') and self.engine:
             self.engine.close()
 
         self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
@@ -278,6 +283,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.updateBoard()
         self.board.setCheck(None)
         self.try_engine_move()
+
+        self.method.refresh(self.engine)
 
     @QtCore.Slot(None)
     def undo(self):

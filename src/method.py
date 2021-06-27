@@ -30,7 +30,24 @@ class Method(object):
         Chess.k: '將',
     }
 
-    nums = [
+    STANDARD_NAME = {
+        Chess.P: '兵',
+        Chess.R: '车',
+        Chess.N: '马',
+        Chess.B: '相',
+        Chess.A: '仕',
+        Chess.C: '炮',
+        Chess.K: '帅',
+        Chess.p: '卒',
+        Chess.r: '车',
+        Chess.n: '马',
+        Chess.b: '象',
+        Chess.a: '士',
+        Chess.c: '炮',
+        Chess.k: '将',
+    }
+
+    CNUMS = [
         '零',
         '一',
         '二',
@@ -43,27 +60,33 @@ class Method(object):
         '九'
     ]
 
-    def get_name(self, chess):
+    ANUMS = [chr(ord('０') + var) for var in range(0, 10)]
+
+    def get_name(self, chess, standard=False):
         if not chess:
             return None
+        if standard:
+            return self.STANDARD_NAME[chess]
         return self.NAMES[chess]
 
-    def get_pos(self, chess, pos):
+    def get_pos(self, chess, pos, standard=False):
         if Chess.is_black(chess):
             num = pos[0] + 1
         else:
             num = 9 - pos[0]
-        return self.nums[num]
+        if standard and Chess.is_black(chess):
+            return self.ANUMS[num]
+        return self.CNUMS[num]
 
-    def get_action(self, chess, fpos, tpos):
+    def get_action(self, chess, fpos, tpos, standard=False):
         delta = (tpos[0] - fpos[0], tpos[1] - fpos[1])
         if Chess.is_red(chess):
             delta = (-delta[0], -delta[1])
 
-        posx = self.get_pos(chess, tpos)
+        posx = self.get_pos(chess, tpos, standard)
 
         if Chess.chess(chess) in {Chess.ROOK, Chess.CANNON, Chess.PAWN, Chess.KING}:
-            posy = self.nums[abs(delta[1])]
+            posy = self.CNUMS[abs(delta[1])]
         else:
             posy = posx
 
@@ -92,12 +115,12 @@ class Method(object):
         wheres = np.argwhere(board == chess)
         return wheres
 
-    def get_method(self, board, fpos, tpos):
+    def get_method(self, board, fpos, tpos, standard=False):
         chess = board[fpos]
 
-        name = self.get_name(chess)
-        pos = self.get_pos(chess, fpos)
-        action = self.get_action(chess, fpos, tpos)
+        name = self.get_name(chess, standard)
+        pos = self.get_pos(chess, fpos, standard)
+        action = self.get_action(chess, fpos, tpos, standard)
 
         method = f'{name}{pos}{action}'
 
@@ -173,7 +196,7 @@ class Method(object):
                 index += 1
                 if fpos != pos:
                     continue
-                pos = self.nums[index]
+                pos = self.CNUMS[index]
                 return f'{pos}{name}{action}'
 
         # 理论上不可能到这里

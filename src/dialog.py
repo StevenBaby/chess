@@ -46,6 +46,7 @@ class Settings(QtWidgets.QDialog):
         self.delay = self.ui.delay
         self.red_depth = self.ui.red_depth
         self.black_depth = self.ui.black_depth
+        self.standard_method = self.ui.standard_method
 
         self.version.setText(f"v{VERSION}")
         self.checkupdate.clicked.connect(self.check_update)
@@ -76,7 +77,7 @@ class Settings(QtWidgets.QDialog):
     def get_default(self):
         data = attrdict()
         data.version = VERSION
-        data.transprancy = 0
+        data.transprancy = False
         data.reverse = False
         data.audio = True
         data.redside = 0
@@ -84,6 +85,7 @@ class Settings(QtWidgets.QDialog):
         data.delay = 300
         data.red_depth = 7
         data.black_depth = 1
+        data.standard_method = False
         return data
 
     def get_current(self):
@@ -97,9 +99,14 @@ class Settings(QtWidgets.QDialog):
         data.delay = self.delay.value()
         data.red_depth = self.red_depth.value()
         data.black_depth = self.black_depth.value()
+        data.standard_method = self.standard_method.isChecked()
         return data
 
     def set_settings(self, settings):
+        if self.standard_method.isChecked() != settings.standard_method:
+            logger.info("set standard_method %s", settings.standard_method)
+            self.standard_method.setChecked(settings.standard_method)
+
         if self.transprancy.value() != settings.transprancy:
             logger.info("set transprancy %s", settings.transprancy)
             self.transprancy.setValue(settings.transprancy)
@@ -177,6 +184,9 @@ class Method(QtWidgets.QDialog):
     def __init__(self, parent=None):
         super().__init__(parent)
 
+        self.engine = None
+        self.standard = False
+
         self.ui = method.Ui_Dialog()
         self.ui.setupUi(self)
         self.list = self.ui.listwidget
@@ -219,11 +229,15 @@ class Method(QtWidgets.QDialog):
 
     def update(self):
         super().update()
+
+        if not self.engine:
+            return
+
         engine = self.engine
         var = 0
         for index, sit in enumerate(engine.stack):
             if sit.moves:
-                method = sit.get_method(engine.stack[index - 1].board, sit.fpos, sit.tpos)
+                method = sit.get_method(engine.stack[index - 1].board, sit.fpos, sit.tpos, self.standard)
                 method = f'{index:03} {method}'
             else:
                 method = "棋局开始"
@@ -255,6 +269,11 @@ class Method(QtWidgets.QDialog):
 
     def refresh(self, engine: Engine):
         self.engine = engine
+        self.signal.refresh.emit()
+
+    def set_standard(self, standard: bool):
+        logger.debug('standard changed %s', standard)
+        self.standard = bool(standard)
         self.signal.refresh.emit()
 
 

@@ -7,7 +7,7 @@
     <x>0</x>
     <y>0</y>
     <width>446</width>
-    <height>348</height>
+    <height>387</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -19,28 +19,8 @@
      <property name="spacing">
       <number>20</number>
      </property>
-     <item row="2" column="1">
-      <widget class="QComboBox" name="redside">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <item>
-        <property name="text">
-         <string>棋手</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>电脑</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="2">
-      <widget class="QLabel" name="label_6">
+     <item row="6" column="3">
+      <widget class="QPushButton" name="cancel">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -48,10 +28,7 @@
         </font>
        </property>
        <property name="text">
-        <string>音效</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <string>取消</string>
        </property>
       </widget>
      </item>
@@ -68,97 +45,6 @@
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="0">
-      <widget class="QLabel" name="label_2">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>反转棋盘</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="0">
-      <widget class="QLabel" name="label_5">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>版本号</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="3" column="2">
-      <widget class="QLabel" name="label_9">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>黑方深度</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="5" column="1">
-      <widget class="QLabel" name="version">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="text">
-        <string>1.1.0</string>
-       </property>
-       <property name="alignment">
-        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="3">
-      <widget class="QComboBox" name="blackside">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <item>
-        <property name="text">
-         <string>电脑</string>
-        </property>
-       </item>
-       <item>
-        <property name="text">
-         <string>棋手</string>
-        </property>
-       </item>
-      </widget>
-     </item>
-     <item row="1" column="1">
-      <widget class="QCheckBox" name="reverse">
-       <property name="text">
-        <string/>
        </property>
       </widget>
      </item>
@@ -187,8 +73,8 @@
        </property>
       </widget>
      </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_7">
+     <item row="5" column="1">
+      <widget class="QLabel" name="version">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -196,31 +82,15 @@
         </font>
        </property>
        <property name="text">
-        <string>引擎延迟</string>
+        <string>1.1.0</string>
        </property>
        <property name="alignment">
-        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+        <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QSpinBox" name="red_depth">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
-       <property name="maximum">
-        <number>10</number>
-       </property>
-       <property name="value">
-        <number>7</number>
-       </property>
-      </widget>
-     </item>
-     <item row="2" column="2">
-      <widget class="QLabel" name="label_4">
+     <item row="1" column="2">
+      <widget class="QLabel" name="label_6">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -228,7 +98,7 @@
         </font>
        </property>
        <property name="text">
-        <string>黑方</string>
+        <string>音效</string>
        </property>
        <property name="alignment">
         <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
@@ -267,6 +137,158 @@
        </property>
       </widget>
      </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>反转棋盘</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_7">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>引擎延迟</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="2">
+      <widget class="QLabel" name="label_4">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>黑方</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QComboBox" name="redside">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <item>
+        <property name="text">
+         <string>棋手</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>电脑</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>版本号</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="2">
+      <widget class="QLabel" name="label_9">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>黑方深度</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="1">
+      <widget class="QSpinBox" name="red_depth">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="maximum">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>7</number>
+       </property>
+      </widget>
+     </item>
+     <item row="6" column="2">
+      <widget class="QPushButton" name="ok">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>确认</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="3">
+      <widget class="QCheckBox" name="audio">
+       <property name="text">
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="5" column="3">
+      <widget class="QPushButton" name="checkupdate">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>检查更新</string>
+       </property>
+      </widget>
+     </item>
      <item row="4" column="1">
       <widget class="QSpinBox" name="delay">
        <property name="font">
@@ -280,16 +302,6 @@
        </property>
        <property name="value">
         <number>300</number>
-       </property>
-      </widget>
-     </item>
-     <item row="1" column="3">
-      <widget class="QCheckBox" name="audio">
-       <property name="text">
-        <string/>
-       </property>
-       <property name="checked">
-        <bool>true</bool>
        </property>
       </widget>
      </item>
@@ -309,21 +321,35 @@
        </property>
       </widget>
      </item>
-     <item row="6" column="3">
-      <widget class="QPushButton" name="cancel">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
+     <item row="1" column="1">
+      <widget class="QCheckBox" name="reverse">
        <property name="text">
-        <string>取消</string>
+        <string/>
        </property>
       </widget>
      </item>
-     <item row="6" column="2">
-      <widget class="QPushButton" name="ok">
+     <item row="2" column="3">
+      <widget class="QComboBox" name="blackside">
+       <property name="font">
+        <font>
+         <family>DengXian</family>
+         <pointsize>14</pointsize>
+        </font>
+       </property>
+       <item>
+        <property name="text">
+         <string>电脑</string>
+        </property>
+       </item>
+       <item>
+        <property name="text">
+         <string>棋手</string>
+        </property>
+       </item>
+      </widget>
+     </item>
+     <item row="4" column="2">
+      <widget class="QLabel" name="label_10">
        <property name="font">
         <font>
          <family>DengXian</family>
@@ -331,20 +357,20 @@
         </font>
        </property>
        <property name="text">
-        <string>确认</string>
+        <string>标准着法</string>
+       </property>
+       <property name="alignment">
+        <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
        </property>
       </widget>
      </item>
-     <item row="5" column="3">
-      <widget class="QPushButton" name="checkupdate">
-       <property name="font">
-        <font>
-         <family>DengXian</family>
-         <pointsize>14</pointsize>
-        </font>
-       </property>
+     <item row="4" column="3">
+      <widget class="QCheckBox" name="standard_method">
        <property name="text">
-        <string>检查更新</string>
+        <string/>
+       </property>
+       <property name="checked">
+        <bool>false</bool>
        </property>
       </widget>
      </item>
