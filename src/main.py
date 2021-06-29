@@ -7,6 +7,7 @@ from functools import partial
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 from PySide2 import QtGui
+from attrdict import attrdict
 
 from board import BoardFrame
 
@@ -280,10 +281,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         engine = self.current_engine()
         engine.position(self.engine.sit.format_fen())
 
-        if self.engine.sit.turn == Chess.RED:
-            engine.go(depth=self.settings.red_depth.value())
-        else:
-            engine.go(depth=self.settings.black_depth.value())
+        engine.go(**self.settings.go_params(self.engine.sit.turn))
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -324,6 +322,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.updateBoard()
         self.board.setCheck(None)
         self.try_engine_move()
+
+        self.params = self.settings.go_params(Chess.RED)
 
         self.method.refresh(self.engine)
 

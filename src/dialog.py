@@ -31,29 +31,73 @@ class Signal(QtCore.QObject):
 
 class Settings(QtWidgets.QDialog):
 
+    ATTRIBUTES = {
+        'ok',
+        'cancel',
+
+        'version',
+        'checkupdate',
+
+        'transprancy',
+        'audio',
+        'reverse',
+        'delay',
+        'standard_method',
+
+        'redside',
+        'blackside',
+
+        'red_engine',
+        'black_engine',
+
+        'mode',
+
+        'red_depth',
+        'black_depth',
+
+        'red_time',
+        'black_time',
+
+        'red_steps',
+        'black_steps',
+
+        'red_increment',
+        'black_increment',
+    }
+
+    SETTINGS = {
+        'transprancy': 0,
+        'audio': True,
+        'reverse': False,
+        'delay': 300,
+        'standard_method': False,
+
+        'redside': 0,
+        'blackside': 0,
+
+        'red_engine': 0,
+        'black_engine': 0,
+
+        'mode': 0,
+
+        'red_depth': 7,
+        'black_depth': 1,
+
+        'red_time': 5000,
+        'black_time': 5000,
+
+        'red_steps': 200,
+        'black_steps': 200,
+
+        'red_increment': 3000,
+        'black_increment': 3000,
+    }
+
     def __init__(self, parent=None):
         super().__init__(parent)
 
         self.ui = settings.Ui_Dialog()
         self.ui.setupUi(self)
-
-        self.ok = self.ui.ok
-        self.transprancy = self.ui.transprancy
-        self.reverse = self.ui.reverse
-        self.redside = self.ui.redside
-        self.blackside = self.ui.blackside
-        self.version = self.ui.version
-        self.checkupdate = self.ui.checkupdate
-        self.audio = self.ui.audio
-        self.delay = self.ui.delay
-        self.red_depth = self.ui.red_depth
-        self.black_depth = self.ui.black_depth
-        self.red_engine = self.ui.red_engine
-        self.black_engine = self.ui.black_engine
-        self.standard_method = self.ui.standard_method
-
-        self.version.setText(f"v{VERSION}")
-        self.checkupdate.clicked.connect(self.check_update)
 
         # 去掉标题栏问号
         flags = QtCore.Qt.Dialog
@@ -65,12 +109,57 @@ class Settings(QtWidgets.QDialog):
 
         self.setStyleSheet("font-family: dengxian;")
 
-        self.ui.ok.clicked.connect(self.save)
+        for name in self.ATTRIBUTES:
+            attr = getattr(self.ui, name)
+            setattr(self, name, attr)
+            logger.info("set settings attr %s object %s", name, attr)
 
-        self.ui.ok.clicked.connect(self.close)
-        self.ui.cancel.clicked.connect(self.close)
-        self.ui.cancel.clicked.connect(lambda: self.set_settings(self.backup))
+        self.version.setText(f"v{VERSION}")
+        self.checkupdate.clicked.connect(self.check_update)
+
+        self.ok.clicked.connect(self.save)
+
+        self.ok.clicked.connect(self.close)
+        self.cancel.clicked.connect(self.close)
+        self.cancel.clicked.connect(lambda: self.set_settings(self.backup))
+        self.mode.currentIndexChanged.connect(self.update_mode)
+        self.update_mode(0)
+
         self.setup_engines()
+
+    @QtCore.Slot(int)
+    def update_mode(self, idx):
+        if idx == 0:
+            # 深度制
+            self.red_depth.setEnabled(True)
+            self.black_depth.setEnabled(True)
+            self.red_time.setEnabled(False)
+            self.black_time.setEnabled(False)
+            self.red_steps.setEnabled(False)
+            self.black_steps.setEnabled(False)
+            self.red_increment.setEnabled(False)
+            self.black_increment.setEnabled(False)
+        elif idx == 1:
+            #  加时制
+            self.red_depth.setEnabled(False)
+            self.black_depth.setEnabled(False)
+            self.red_time.setEnabled(True)
+            self.black_time.setEnabled(True)
+            self.red_steps.setEnabled(False)
+            self.black_steps.setEnabled(False)
+            self.red_increment.setEnabled(True)
+            self.black_increment.setEnabled(True)
+            pass
+        elif idx == 2:
+            # 时段制
+            self.red_depth.setEnabled(False)
+            self.black_depth.setEnabled(False)
+            self.red_time.setEnabled(True)
+            self.black_time.setEnabled(True)
+            self.red_steps.setEnabled(True)
+            self.black_steps.setEnabled(True)
+            self.red_increment.setEnabled(False)
+            self.black_increment.setEnabled(False)
 
     def get_engine_box(self, turn) -> QtWidgets.QComboBox:
         if turn == Chess.RED:
@@ -91,102 +180,103 @@ class Settings(QtWidgets.QDialog):
         return os.path.join(system.get_execpath(), 'settings.json')
 
     def get_default(self):
-        data = attrdict()
+        data = attrdict.loads(self.SETTINGS)
         data.version = VERSION
-        data.transprancy = False
-        data.reverse = False
-        data.audio = True
-        data.redside = 0
-        data.blackside = 0
-        data.delay = 300
-        data.red_depth = 7
-        data.black_depth = 1
-        data.standard_method = False
-        data.red_engine = 0
-        data.black_engine = 0
-
         return data
 
     def get_current(self):
         data = self.get_default()
-        data.version = VERSION
-        data.transprancy = self.transprancy.value()
-        data.reverse = self.reverse.isChecked()
-        data.audio = self.audio.isChecked()
-        data.redside = self.redside.currentIndex()
-        data.blackside = self.blackside.currentIndex()
-        data.delay = self.delay.value()
-        data.red_depth = self.red_depth.value()
-        data.black_depth = self.black_depth.value()
-        data.standard_method = self.standard_method.isChecked()
 
-        data.red_engine = self.red_engine.currentIndex()
-        data.black_engine = self.black_engine.currentIndex()
+        for name in self.SETTINGS:
+            attr = getattr(self, name)
+            if isinstance(attr, (QtWidgets.QLabel, )):
+                continue
+            if isinstance(attr, (QtWidgets.QSlider, QtWidgets.QSpinBox)):
+                value = attr.value()
+            elif isinstance(attr, QtWidgets.QCheckBox):
+                value = attr.isChecked()
+            elif isinstance(attr, QtWidgets.QComboBox):
+                value = attr.currentIndex()
+            else:
+                raise Exception(str(attr))
+            data[name] = value
 
         return data
 
-    def set_settings(self, settings):
-        if self.standard_method.isChecked() != settings.standard_method:
-            logger.info("set standard_method %s", settings.standard_method)
-            self.standard_method.setChecked(settings.standard_method)
+    def set_settings(self, settings: dict):
+        for name, value in self.SETTINGS.items():
+            attr = getattr(self, name)
+            if name in settings:
+                value = settings[name]
+            if isinstance(attr, (QtWidgets.QLabel, )):
+                continue
+            if isinstance(attr, (QtWidgets.QSlider, QtWidgets.QSpinBox)):
+                if attr.value() != value:
+                    attr.setValue(value)
+                    logger.info("set %s %s", name, value)
+            elif isinstance(attr, QtWidgets.QCheckBox):
+                if attr.isChecked() != value:
+                    attr.setChecked(value)
+                    logger.info("set %s %s", name, value)
+            elif isinstance(attr, QtWidgets.QComboBox):
+                if attr.currentIndex() != value:
+                    attr.setCurrentIndex(value)
+                    logger.info("set %s %s", name, value)
+            else:
+                raise Exception(str(attr))
 
-        if self.transprancy.value() != settings.transprancy:
-            logger.info("set transprancy %s", settings.transprancy)
-            self.transprancy.setValue(settings.transprancy)
-
-        if self.reverse.isChecked() != settings.reverse:
-            logger.info("set reverse %s", settings.reverse)
-            self.reverse.setChecked(settings.reverse)
-
-        if self.audio.isChecked() != settings.audio:
-            logger.info("set audio %s", settings.audio)
-            self.audio.setChecked(settings.audio)
-
-        if self.redside.currentIndex() != settings.redside:
-            logger.info("set redside %s", settings.redside)
-            self.redside.setCurrentIndex(settings.redside)
-
-        if self.blackside.currentIndex() != settings.blackside:
-            logger.info("set blackside %s", settings.blackside)
-            self.blackside.setCurrentIndex(settings.blackside)
-
-        if self.red_engine.currentIndex() != settings.red_engine:
-            logger.info("set red_engine %s", settings.red_engine)
-            self.red_engine.setCurrentIndex(settings.red_engine)
-
-        if self.black_engine.currentIndex() != settings.black_engine:
-            logger.info("set black_engine %s", settings.black_engine)
-            self.black_engine.setCurrentIndex(settings.black_engine)
-
-        if self.delay.value() != settings.delay:
-            logger.info("set delay %s", settings.delay)
-            self.delay.setValue(settings.delay)
-
-        if self.red_depth.value() != settings.red_depth:
-            logger.info("set red_depth %s", settings.red_depth)
-            self.red_depth.setValue(settings.red_depth)
-
-        if self.black_depth.value() != settings.black_depth:
-            logger.info("set black_depth %s", settings.black_depth)
-            self.black_depth.setValue(settings.black_depth)
+    def go_params(self, turn):
+        idx = self.mode.currentIndex()
+        params = attrdict()
+        if idx == 0:
+            # 深度制
+            if turn == Chess.RED:
+                params.depth = self.red_depth.value()
+            else:
+                params.depth = self.black_depth.value()
+        elif idx == 1:
+            #  加时制
+            if turn == Chess.RED:
+                params.time = self.red_time.value()
+                params.increment = self.red_increment.value()
+                params.opptime = self.black_time.value()
+                params.oppincrement = self.black_increment.value()
+            else:
+                params.time = self.black_time.value()
+                params.increment = self.black_increment.value()
+                params.opptime = self.red_time.value()
+                params.oppincrement = self.red_increment.value()
+        elif idx == 2:
+            # 时段制
+            if turn == Chess.RED:
+                params.time = self.red_time.value()
+                params.movestogo = self.red_steps.value()
+                params.opptime = self.black_time.value()
+                params.oppmovestogo = self.black_steps.value()
+            else:
+                params.time = self.black_time.value()
+                params.movestogo = self.black_steps.value()
+                params.opptime = self.red_time.value()
+                params.oppmovestogo = self.red_steps.value()
+        else:
+            raise Exception("invalid engine mode")
+        return params
 
     def loads(self):
         import json
         filename = self.get_filename()
         settings = self.get_default()
 
-        if not os.path.exists(filename):
-            return
+        if os.path.exists(filename):
+            with open(filename, encoding='utf8') as file:
+                source = file.read()
 
-        with open(filename, encoding='utf8') as file:
-            source = file.read()
-
-        try:
-            data = json.loads(source)
-            data = attrdict.loads(data)
-            settings.update(data)
-        except Exception:
-            return
+            try:
+                data = json.loads(source)
+                data = attrdict.loads(data)
+                settings.update(data)
+            except Exception:
+                pass
 
         self.set_settings(settings)
 
