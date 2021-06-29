@@ -25,6 +25,3 @@ def get_execpath():
         return os.path.dirname(os.path.realpath(sys.executable))
     else:
         return pathlib.Path(__file__).parent
-
-
-logger.debug("system release %s debug %s dirpath %s", RELEASE, DEBUG, get_dirpath())

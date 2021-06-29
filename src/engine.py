@@ -78,6 +78,8 @@ class Engine(threading.Thread):
     ENGINE_MOVE = 3
     ENGINE_INFO = 4
 
+    name = '基础引擎'
+
     def __init__(self):
         super().__init__(daemon=True)
         self.name = 'EngineThread'
@@ -236,12 +238,19 @@ class PipeEngine(Engine):
             logger.error("send command error %s", e)
             logger.error(traceback.format_exc())
 
+    def decode(self, line):
+        try:
+            return line.decode('utf8')
+        except UnicodeDecodeError:
+            return line.decode("gbk")
+
     def readline(self):
         # 从引擎标准输出读取一行
 
         while True:
             try:
-                line = self.stdout.readline().strip().decode('utf8')
+                line = self.stdout.readline().strip()
+                line = self.decode(line)
                 if not line:
                     return ""
                 logger.info("OUTPUT: %s", line)
