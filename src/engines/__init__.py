@@ -11,6 +11,7 @@ import sys
 import re
 import importlib
 import glob
+import typing
 
 dirname = os.path.dirname(os.path.abspath(__file__))
 project = os.path.dirname(dirname)
@@ -23,7 +24,7 @@ from engine import UCCIEngine  # noqa
 IGNORED = [PipeEngine, UCCIEngine]
 
 
-def get_engines():
+def get_ucci_engines() -> typing.List[UCCIEngine]:
     engines = glob.glob(os.path.join(dirname, '*/__init__.py'))
     result = []
     for name in engines:
@@ -41,10 +42,10 @@ def get_engines():
                 continue
             if engine in IGNORED:
                 continue
-            if not issubclass(engine, Engine):
+            if not issubclass(engine, UCCIEngine):
                 continue
             result.append(engine)
     return result
 
 
-ENGINES = get_engines()
+UCCI_ENGINES = get_ucci_engines()

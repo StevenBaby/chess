@@ -11,8 +11,10 @@ from version import VERSION
 from attrdict import attrdict
 from logger import logger
 
+from chess import Chess
 from engine import Engine
 from chess import Chess
+from engines import UCCI_ENGINES
 
 from ui import settings
 from ui import method
@@ -46,6 +48,8 @@ class Settings(QtWidgets.QDialog):
         self.delay = self.ui.delay
         self.red_depth = self.ui.red_depth
         self.black_depth = self.ui.black_depth
+        self.red_engine = self.ui.red_engine
+        self.black_engine = self.ui.black_engine
         self.standard_method = self.ui.standard_method
 
         self.version.setText(f"v{VERSION}")
@@ -66,6 +70,18 @@ class Settings(QtWidgets.QDialog):
         self.ui.ok.clicked.connect(self.close)
         self.ui.cancel.clicked.connect(self.close)
         self.ui.cancel.clicked.connect(lambda: self.set_settings(self.backup))
+        self.setup_engines()
+
+    def get_engine_box(self, turn) -> QtWidgets.QComboBox:
+        if turn == Chess.RED:
+            return self.red_engine
+        else:
+            return self.black_engine
+
+    def setup_engines(self):
+        for engine in UCCI_ENGINES:
+            self.red_engine.addItem(engine.NAME)
+            self.black_engine.addItem(engine.NAME)
 
     def show(self):
         self.backup = self.get_current()
@@ -86,6 +102,9 @@ class Settings(QtWidgets.QDialog):
         data.red_depth = 7
         data.black_depth = 1
         data.standard_method = False
+        data.red_engine = 0
+        data.black_engine = 0
+
         return data
 
     def get_current(self):
@@ -100,6 +119,10 @@ class Settings(QtWidgets.QDialog):
         data.red_depth = self.red_depth.value()
         data.black_depth = self.black_depth.value()
         data.standard_method = self.standard_method.isChecked()
+
+        data.red_engine = self.red_engine.currentIndex()
+        data.black_engine = self.black_engine.currentIndex()
+
         return data
 
     def set_settings(self, settings):
@@ -126,6 +149,14 @@ class Settings(QtWidgets.QDialog):
         if self.blackside.currentIndex() != settings.blackside:
             logger.info("set blackside %s", settings.blackside)
             self.blackside.setCurrentIndex(settings.blackside)
+
+        if self.red_engine.currentIndex() != settings.red_engine:
+            logger.info("set red_engine %s", settings.red_engine)
+            self.red_engine.setCurrentIndex(settings.red_engine)
+
+        if self.black_engine.currentIndex() != settings.black_engine:
+            logger.info("set black_engine %s", settings.black_engine)
+            self.black_engine.setCurrentIndex(settings.black_engine)
 
         if self.delay.value() != settings.delay:
             logger.info("set delay %s", settings.delay)
@@ -279,10 +310,10 @@ class Method(QtWidgets.QDialog):
 
 def main():
     app = QtWidgets.QApplication()
-    window = Method()
-    # window = Settings()
+    # window = Method()
+    window = Settings()
     # window._test_signal()
-    # window.loads()
+    window.loads()
     window.show()
     app.exec_()
 

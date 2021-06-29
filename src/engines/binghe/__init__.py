@@ -7,7 +7,7 @@ filename = os.path.join(os.path.dirname(os.path.abspath(__file__)), 'binghe.exe'
 
 class BingHeEngine(UCCIEngine):
 
-    name = '兵河五四'
+    NAME = '兵河五四'
 
     def __init__(self, callback):
         super().__init__(filename, callback=callback)

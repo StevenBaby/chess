@@ -78,7 +78,7 @@ class Engine(threading.Thread):
     ENGINE_MOVE = 3
     ENGINE_INFO = 4
 
-    name = '基础引擎'
+    NAME = '基础引擎'
 
     def __init__(self):
         super().__init__(daemon=True)
@@ -180,8 +180,8 @@ class PipeEngine(Engine):
     def __init__(self, filename: Path):
         super().__init__()
 
-        self.filename = Path(filename)
-        self.dirname = str(filename.parent)
+        self.filename = filename
+        self.dirname = os.path.dirname(filename)
         self.pipe = None
 
         self.parser_thread = threading.Thread(
@@ -352,8 +352,9 @@ class UCCIEngine(PipeEngine):
         command = f'setoption {option} {value}'
         self.send_command(command)
 
-    def position(self):
-        fen = self.sit.format_fen()
+    def position(self, fen=None):
+        if not fen:
+            fen = self.sit.format_fen()
 
         mark = 'fen '
         if fen.startswith('startpos'):
@@ -383,7 +384,6 @@ class UCCIEngine(PipeEngine):
            time=None, increment=None,
            opptime=None, oppmovetogo=None, oppincrement=None,
            draw=None, ponder=None):
-        self.position()
 
         command = "go"
         if draw:

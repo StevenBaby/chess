@@ -15,8 +15,10 @@ from engine import UCCIEngine
 from engine import Chess
 from engine import dirpath
 from engine import logger
+from engines import UCCI_ENGINES
 
 import audio
+import engines
 import system
 from version import VERSION
 
@@ -84,8 +86,6 @@ class GameContextMenu(BaseContextMenu):
 
 class Game(BoardFrame, BaseContextMenuWidget):
 
-    ELEEYE = dirpath / 'engines/eleeye/eleeye.exe'
-
     def __init__(self, parent=None):
         super().__init__(parent, board_class=ArrangeBoard)
         self.setWindowTitle(f"中国象棋 v{VERSION}")
@@ -94,11 +94,15 @@ class Game(BoardFrame, BaseContextMenuWidget):
         audio.init()
 
         self.engine = None
+        self.engines = {
+            Chess.RED: None,
+            Chess.BLACK: None,
+        }
 
         self.engine_side = [Chess.BLACK]
         self.human_side = [Chess.RED]
 
-        self.board.csize = 80
+        self.board.csize = 20
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
 
@@ -212,8 +216,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
             return
         logger.debug('finish arrange')
         self.engine.close()
-        self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
-        self.engine.start()
+        self.engine = Engine()
 
         self.engine.sit.board = self.board.board
         self.engine.sit.turn = self.board.first_side
@@ -245,6 +248,16 @@ class Game(BoardFrame, BaseContextMenuWidget):
         else:
             self.human_side.append(Chess.BLACK)
 
+        idx = self.settings.red_engine.currentIndex()
+        engine = self.engines[Chess.RED]
+        if not isinstance(engine, UCCI_ENGINES[idx]):
+            self.init_engines(Chess.RED)
+
+        idx = self.settings.black_engine.currentIndex()
+        engine = self.engines[Chess.BLACK]
+        if not isinstance(engine, UCCI_ENGINES[idx]):
+            self.init_engines(Chess.BLACK)
+
         if len(self.engine_side) == 2:
             self.method.list.setEnabled(False)
         else:
@@ -256,11 +269,21 @@ class Game(BoardFrame, BaseContextMenuWidget):
     def try_engine_move(self):
         if self.engine.sit.turn not in self.engine_side:
             return
+        self.go()
+
+    def go(self):
+        if self.engine.checkmate:
+            self.game_signal.checkmate.emit()
+            logger.debug('engine is checkmated hint ignored...')
+            return
         self.game_signal.thinking.emit(True)
+        engine = self.current_engine()
+        engine.position(self.engine.sit.format_fen())
+
         if self.engine.sit.turn == Chess.RED:
-            self.engine.go(depth=self.settings.red_depth.value())
+            engine.go(depth=self.settings.red_depth.value())
         else:
-            self.engine.go(depth=self.settings.black_depth.value())
+            engine.go(depth=self.settings.black_depth.value())
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -268,12 +291,30 @@ class Game(BoardFrame, BaseContextMenuWidget):
             return
         audio.play(audio_type)
 
-    def reset(self):
-        if hasattr(self, 'engine') and self.engine:
-            self.engine.close()
+    def init_engines(self, turn=None):
+        turns = []
+        if turn == Chess.RED:
+            turns = [Chess.RED]
+        elif turn == Chess.BLACK:
+            turns = [Chess.BLACK]
+        else:
+            turns = [Chess.RED, Chess.BLACK]
+        for turn in turns:
+            old = self.engines[turn]
+            if old:
+                old.close()
+            idx = self.settings.get_engine_box(turn).currentIndex()
+            new = UCCI_ENGINES[idx](callback=self.engine_callback)
+            new.start()
+            self.engines[turn] = new
 
-        self.engine = UCCIEngine(filename=self.ELEEYE, callback=self.engine_callback)
-        self.engine.start()
+    def current_engine(self) -> Engine:
+        return self.engines[self.engine.sit.turn]
+
+    def reset(self):
+        self.init_engines()
+
+        self.engine = Engine()
 
         self.fpos = None
         self.board.arranging = False
@@ -313,15 +354,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         if self.thinking:
             logger.debug('engine is thinking hint ignored...')
             return
-        if self.engine.checkmate:
-            self.game_signal.checkmate.emit()
-            logger.debug('engine is checkmated hint ignored...')
-            return
-        self.game_signal.thinking.emit(True)
-        if self.engine.sit.turn == Chess.RED:
-            self.engine.go(depth=self.settings.red_depth.value())
-        else:
-            self.engine.go(depth=self.settings.black_depth.value())
+        self.go()
 
     @QtCore.Slot(None)
     def debug(self):
