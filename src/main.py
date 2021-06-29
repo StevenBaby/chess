@@ -66,7 +66,7 @@ class GameContextMenu(BaseContextMenu):
         'separator',
         ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
-        ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), True),
+        ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), False),
         'separator',
         ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
@@ -102,7 +102,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.engine_side = [Chess.BLACK]
         self.human_side = [Chess.RED]
 
-        self.board.csize = 20
+        self.board.csize = 80
         self.board.callback = self.board_callback
         self.resize(self.board.csize * Chess.W, self.board.csize * Chess.H)
 
@@ -184,7 +184,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_menu.exec_(self.mapToGlobal(point))
 
     def update_action_state(self):
-        if len(self.engine_side) == 2:
+        if len(self.engine_side) == 2 and not self.engine.checkmate:
             self.game_menu.setAllMenuEnabled(False)
             self.game_menu.setAllShortcutEnabled(False)
         elif self.thinking:
@@ -197,7 +197,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
     def set_thinking(self, thinking):
         self.thinking = thinking
         logger.debug("set thinking %s", self.thinking)
-        if len(self.engine_side) == 2:
+        if len(self.engine_side) == 2 and not self.engine.checkmate:
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
         elif self.thinking:
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)

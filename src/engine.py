@@ -174,6 +174,15 @@ class Engine(threading.Thread):
         self.sit = self.stack[self.index]
         return True
 
+    def position(self, fen=None):
+        return
+
+    def go(self, depth=3, nodes=None,
+           time=None, increment=None,
+           opptime=None, oppmovetogo=None, oppincrement=None,
+           draw=None, ponder=None):
+        return
+
 
 class PipeEngine(Engine):
 
@@ -240,9 +249,9 @@ class PipeEngine(Engine):
 
     def decode(self, line):
         try:
-            return line.decode('utf8')
-        except UnicodeDecodeError:
             return line.decode("gbk")
+        except UnicodeDecodeError:
+            return line.decode("utf8")
 
     def readline(self):
         # 从引擎标准输出读取一行
@@ -307,6 +316,7 @@ class UCCIEngine(PipeEngine):
         self.send_command('ucci')
 
         while self.running:
+            self.send_command('ucci')
             line = self.readline()
             if not line:
                 continue
@@ -363,16 +373,6 @@ class UCCIEngine(PipeEngine):
         command = f'position {mark}{fen}'
 
         self.send_command(command)
-
-    def move(self, fpos, tpos):
-        result = super().move(fpos, tpos)
-        if not result:
-            return result
-        return result
-
-    def undo(self):
-        if super().undo():
-            return True
 
     def banmoves(self, moves: list):
         if not moves:
@@ -510,13 +510,14 @@ def main():
     app = QtWidgets.QApplication(sys.argv)
     ui = BoardFrame()
 
-    def callback(move_type, fpos, tpos):
+    def callback(move_type, data):
         if move_type in (Chess.MOVE, ):
-            engine.move(fpos, tpos)
+            engine.move(data[0], data[1])
             ui.board.setBoard(engine.sit.board, engine.sit.fpos, engine.sit.tpos)
 
             time.sleep(1)
 
+            engine.position()
             if engine.sit.turn == Chess.RED:
                 engine.go(depth=2)
             else:
