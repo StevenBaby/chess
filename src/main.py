@@ -22,8 +22,8 @@ import engines
 import system
 from version import VERSION
 
-from dialog import Settings
-from dialog import Method
+from dialogs.settings import SettingsDialog
+from dialogs.method import MethodDialog
 from toast import Toast
 
 from context import BaseContextMenu
@@ -108,10 +108,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal = GameSignal()
 
-        self.method = Method(self)
+        self.method = MethodDialog(self)
         self.method.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
 
-        self.settings = Settings(self)
+        self.settings = SettingsDialog(self)
         self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
 
         self.game_menu = GameContextMenu(self, self.game_signal)
