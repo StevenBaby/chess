@@ -170,11 +170,12 @@ class Board(QLabel):
         label.setVisible(True)
         label.raise_()  # 将控件提到前面
 
-        self.animate.setTargetObject(label)
-        self.animate.setDuration(self.ANIMATION_DURATION)
-        self.animate.setStartValue(QtCore.QRect(self.getChessGeometry(fpos)))
-        self.animate.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
-        self.animate.start()
+        if self.animate.state() != QtCore.QAbstractAnimation.State.Running:
+            self.animate.setTargetObject(label)
+            self.animate.setDuration(self.ANIMATION_DURATION)
+            self.animate.setStartValue(QtCore.QRect(self.getChessGeometry(fpos)))
+            self.animate.setEndValue(QtCore.QRect(self.getChessGeometry(tpos)))
+            self.animate.start()
 
         # 动画完成的回调，目前只用于刷新棋盘
         if callable(callback):

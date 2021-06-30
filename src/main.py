@@ -280,10 +280,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         engine = self.current_engine()
         engine.position(self.engine.sit.format_fen())
 
-        if self.engine.sit.turn == Chess.RED:
-            engine.go(depth=self.settings.red_depth.value())
-        else:
-            engine.go(depth=self.settings.black_depth.value())
+        params = self.settings.get_params(self.engine.sit.turn)
+        engine.go(**params)
 
     @QtCore.Slot(int)
     def play(self, audio_type):

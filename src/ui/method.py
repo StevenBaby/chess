@@ -17,10 +17,10 @@ class Ui_Dialog(object):
     def setupUi(self, Dialog):
         if not Dialog.objectName():
             Dialog.setObjectName(u"Dialog")
-        Dialog.resize(200, 414)
-        Dialog.setMinimumSize(QSize(200, 0))
-        Dialog.setMaximumSize(QSize(200, 16777215))
-        Dialog.setSizeIncrement(QSize(200, 0))
+        Dialog.resize(240, 609)
+        Dialog.setMinimumSize(QSize(240, 0))
+        Dialog.setMaximumSize(QSize(240, 16777215))
+        Dialog.setSizeIncrement(QSize(0, 0))
         self.verticalLayout = QVBoxLayout(Dialog)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.listwidget = QListWidget(Dialog)

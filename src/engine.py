@@ -90,6 +90,8 @@ class Engine(threading.Thread):
 
         self.index = 0
         self.running = False
+        self.usemillisec = True
+        self.millisec = 1
 
     def callback(self, type, data):
         pass
@@ -102,9 +104,6 @@ class Engine(threading.Thread):
         pass
 
     def close(self):
-        pass
-
-    def go(self, depth=3):
         pass
 
     def set_index(self, index):
@@ -177,9 +176,9 @@ class Engine(threading.Thread):
     def position(self, fen=None):
         return
 
-    def go(self, depth=3, nodes=None,
-           time=None, increment=None,
-           opptime=None, oppmovetogo=None, oppincrement=None,
+    def go(self, depth=None, nodes=None,
+           time=None, movestogo=None, increment=None,
+           opptime=None, oppmovestogo=None, oppincrement=None,
            draw=None, ponder=None):
         return
 
@@ -362,6 +361,15 @@ class UCCIEngine(PipeEngine):
         command = f'setoption {option} {value}'
         self.send_command(command)
 
+    def setup_option(self, name, option):
+        if name == 'usemillisec':
+            if option.value == 'true':
+                self.usemillisec = True
+                self.millisec = 1
+            else:
+                self.usemillisec = False
+                self.millisec = 1000
+
     def position(self, fen=None):
         if not fen:
             fen = self.sit.format_fen()
@@ -380,9 +388,9 @@ class UCCIEngine(PipeEngine):
         command = f'banmoves {" ".join(moves)}'
         self.send_command(command)
 
-    def go(self, depth=3, nodes=None,
-           time=None, increment=None,
-           opptime=None, oppmovetogo=None, oppincrement=None,
+    def go(self, depth=None, nodes=None,
+           time=None, movestogo=None, increment=None,
+           opptime=None, oppmovestogo=None, oppincrement=None,
            draw=None, ponder=None):
 
         command = "go"
@@ -396,15 +404,24 @@ class UCCIEngine(PipeEngine):
         elif nodes:
             command += f' nodes {depth}'
         elif time:
+            time //= self.millisec
             command += f' time {time}'
+
             if increment:
-                command += f'increment {increment}'
+                increment //= self.millisec
+                command += f' increment {increment}'
+            elif movestogo:
+                command += f' movestogo {movestogo}'
             elif opptime:
-                command += f'opptime {opptime}'
-            elif oppmovetogo:
-                command += f'oppmovetogo {oppmovetogo}'
-            elif oppincrement:
-                command += f'oppincrement {oppincrement}'
+                opptime //= self.millisec
+                command += f' opptime {opptime}'
+            if oppincrement:
+                oppincrement //= self.millisec
+                command += f' oppincrement {oppincrement}'
+            elif oppmovestogo:
+                command += f' oppmovestogo {oppmovestogo}'
+        else:
+            return
 
         self.send_command(command)
         self.state = self.ENGINE_BUSY
@@ -459,6 +476,7 @@ class UCCIEngine(PipeEngine):
                 return
             if instruct == 'option':
                 self.options[tup[0]] = self.parse_option(tup[1])
+                self.setup_option(tup[0], self.options[tup[0]])
                 return
 
             if instruct == 'info':

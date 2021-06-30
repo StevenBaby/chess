@@ -28,7 +28,45 @@ import system
 UPDATE_URL = 'https://github.com/StevenBaby/chess/releases'
 
 
-class SettingsDialog(QtWidgets.QDialog):
+class SettingsDialog(BaseDialog):
+
+    ATTRIBUTES = {
+        'ok',
+        'cancel',
+
+        'version',
+        'checkupdate',
+    }
+
+    SETTINGS = {
+        'transprancy': 0,
+        'audio': True,
+        'reverse': False,
+        'delay': 300,
+        'animate': True,
+        'standard_method': False,
+
+        'redside': 0,
+        'blackside': 0,
+
+        'red_engine': 0,
+        'black_engine': 0,
+
+        'mode': 0,
+
+        'red_depth': 7,
+        'black_depth': 1,
+
+        'red_time': 1000,
+        'black_time': 1000,
+    }
+
+    ATTRIBUTES.update(
+        SETTINGS.keys()
+    )
+
+    MODE_DEPTH = 0
+    MODE_TIME = 1
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -36,28 +74,13 @@ class SettingsDialog(QtWidgets.QDialog):
         self.ui = Ui_Dialog()
         self.ui.setupUi(self)
 
-        self.ok = self.ui.ok
-        self.transprancy = self.ui.transprancy
-        self.reverse = self.ui.reverse
-        self.redside = self.ui.redside
-        self.blackside = self.ui.blackside
-        self.version = self.ui.version
-        self.checkupdate = self.ui.checkupdate
-        self.audio = self.ui.audio
-        self.delay = self.ui.delay
-        self.red_depth = self.ui.red_depth
-        self.black_depth = self.ui.black_depth
-        self.red_engine = self.ui.red_engine
-        self.black_engine = self.ui.black_engine
-        self.standard_method = self.ui.standard_method
+        for name in self.ATTRIBUTES:
+            attr = getattr(self.ui, name)
+            setattr(self, name, attr)
+            logger.info("set settings attr %s object %s", name, attr)
 
-        self.version.setText(f"v{VERSION}")
-        self.checkupdate.clicked.connect(self.check_update)
-
-        # 去掉标题栏问号
-        flags = QtCore.Qt.Dialog
-        flags |= QtCore.Qt.WindowCloseButtonHint
-        self.setWindowFlags(flags)
+        self.ui.version.setText(f"v{VERSION}")
+        self.ui.checkupdate.clicked.connect(self.check_update)
 
         # 设置标题
         self.setWindowTitle("设置")
@@ -90,84 +113,74 @@ class SettingsDialog(QtWidgets.QDialog):
         return os.path.join(system.get_execpath(), 'settings.json')
 
     def get_default(self):
-        data = attrdict()
+        data = attrdict.loads(self.SETTINGS)
         data.version = VERSION
-        data.transprancy = False
-        data.reverse = False
-        data.audio = True
-        data.redside = 0
-        data.blackside = 0
-        data.delay = 300
-        data.red_depth = 7
-        data.black_depth = 1
-        data.standard_method = False
-        data.red_engine = 0
-        data.black_engine = 0
-
         return data
 
     def get_current(self):
         data = self.get_default()
-        data.version = VERSION
-        data.transprancy = self.transprancy.value()
-        data.reverse = self.reverse.isChecked()
-        data.audio = self.audio.isChecked()
-        data.redside = self.redside.currentIndex()
-        data.blackside = self.blackside.currentIndex()
-        data.delay = self.delay.value()
-        data.red_depth = self.red_depth.value()
-        data.black_depth = self.black_depth.value()
-        data.standard_method = self.standard_method.isChecked()
 
-        data.red_engine = self.red_engine.currentIndex()
-        data.black_engine = self.black_engine.currentIndex()
+        for name in self.SETTINGS:
+            attr = getattr(self, name)
+            if isinstance(attr, (QtWidgets.QLabel, )):
+                continue
+            if isinstance(attr, (QtWidgets.QSlider, QtWidgets.QSpinBox)):
+                value = attr.value()
+            elif isinstance(attr, QtWidgets.QCheckBox):
+                value = attr.isChecked()
+            elif isinstance(attr, QtWidgets.QComboBox):
+                value = attr.currentIndex()
+            else:
+                raise Exception(str(attr))
+            data[name] = value
 
         return data
 
-    def set_settings(self, settings):
-        if self.standard_method.isChecked() != settings.standard_method:
-            logger.info("set standard_method %s", settings.standard_method)
-            self.standard_method.setChecked(settings.standard_method)
+    def set_settings(self, settings: dict):
+        for name, value in self.SETTINGS.items():
+            attr = getattr(self, name)
+            if name in settings:
+                value = settings[name]
+            if isinstance(attr, (QtWidgets.QLabel, )):
+                continue
+            if isinstance(attr, (QtWidgets.QSlider, QtWidgets.QSpinBox)):
+                if attr.value() != value:
+                    attr.setValue(value)
+                    logger.info("set %s %s", name, value)
+            elif isinstance(attr, QtWidgets.QCheckBox):
+                if attr.isChecked() != value:
+                    attr.setChecked(value)
+                    logger.info("set %s %s", name, value)
+            elif isinstance(attr, QtWidgets.QComboBox):
+                if attr.currentIndex() != value:
+                    attr.setCurrentIndex(value)
+                    logger.info("set %s %s", name, value)
+            else:
+                raise Exception(str(attr))
 
-        if self.transprancy.value() != settings.transprancy:
-            logger.info("set transprancy %s", settings.transprancy)
-            self.transprancy.setValue(settings.transprancy)
+    def get_mode(self):
+        return self.ui.mode.currentIndex()
 
-        if self.reverse.isChecked() != settings.reverse:
-            logger.info("set reverse %s", settings.reverse)
-            self.reverse.setChecked(settings.reverse)
-
-        if self.audio.isChecked() != settings.audio:
-            logger.info("set audio %s", settings.audio)
-            self.audio.setChecked(settings.audio)
-
-        if self.redside.currentIndex() != settings.redside:
-            logger.info("set redside %s", settings.redside)
-            self.redside.setCurrentIndex(settings.redside)
-
-        if self.blackside.currentIndex() != settings.blackside:
-            logger.info("set blackside %s", settings.blackside)
-            self.blackside.setCurrentIndex(settings.blackside)
-
-        if self.red_engine.currentIndex() != settings.red_engine:
-            logger.info("set red_engine %s", settings.red_engine)
-            self.red_engine.setCurrentIndex(settings.red_engine)
-
-        if self.black_engine.currentIndex() != settings.black_engine:
-            logger.info("set black_engine %s", settings.black_engine)
-            self.black_engine.setCurrentIndex(settings.black_engine)
-
-        if self.delay.value() != settings.delay:
-            logger.info("set delay %s", settings.delay)
-            self.delay.setValue(settings.delay)
-
-        if self.red_depth.value() != settings.red_depth:
-            logger.info("set red_depth %s", settings.red_depth)
-            self.red_depth.setValue(settings.red_depth)
-
-        if self.black_depth.value() != settings.black_depth:
-            logger.info("set black_depth %s", settings.black_depth)
-            self.black_depth.setValue(settings.black_depth)
+    def get_params(self, turn):
+        mode = self.get_mode()
+        params = attrdict()
+        if mode == self.MODE_DEPTH:
+            # 深度制
+            if turn == Chess.RED:
+                params.depth = self.red_depth.value()
+            else:
+                params.depth = self.black_depth.value()
+        elif mode == self.MODE_TIME:
+            #  加时制
+            if turn == Chess.RED:
+                params.time = self.red_time.value()
+                params.opptime = self.black_time.value()
+            else:
+                params.time = self.black_time.value()
+                params.opptime = self.red_time.value()
+        else:
+            raise Exception("invalid engine mode")
+        return params
 
     def loads(self):
         import json
@@ -213,4 +226,5 @@ if __name__ == '__main__':
     app = QtWidgets.QApplication()
     window = SettingsDialog()
     window.show()
+    window.loads()
     app.exec_()
