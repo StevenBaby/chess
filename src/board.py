@@ -160,7 +160,12 @@ class Board(QLabel):
         self.check = check
         self.signal.refresh.emit()
 
-    def move(self, board, fpos, tpos, callback=None):
+    def move(self, board, fpos, tpos, callback=None, animate=True):
+        if not animate:
+            if callable(callback):
+                callback()
+            return
+
         # 棋盘动画
 
         label = self.getLabel(fpos)

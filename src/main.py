@@ -427,7 +427,11 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
-        self.board.move(self.engine.sit.board, fpos, tpos, self.updateBoard)
+        self.board.move(
+            self.engine.sit.board, fpos, tpos,
+            self.updateBoard,
+            self.settings.ui.animate.isChecked(),
+        )
 
     def move(self, fpos, tpos):
         self.game_signal.thinking.emit(False)

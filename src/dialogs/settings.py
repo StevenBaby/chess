@@ -94,6 +94,23 @@ class SettingsDialog(BaseDialog):
         self.ui.cancel.clicked.connect(lambda: self.set_settings(self.backup))
         self.setup_engines()
 
+        self.mode.currentIndexChanged.connect(self.update_mode)
+
+    @QtCore.Slot(int)
+    def update_mode(self, mode):
+        if mode == self.MODE_DEPTH:
+            # 深度制
+            self.red_depth.setEnabled(True)
+            self.black_depth.setEnabled(True)
+            self.red_time.setEnabled(False)
+            self.black_time.setEnabled(False)
+        elif mode == self.MODE_TIME:
+            #  加时制
+            self.red_depth.setEnabled(False)
+            self.black_depth.setEnabled(False)
+            self.red_time.setEnabled(True)
+            self.black_time.setEnabled(True)
+
     def get_engine_box(self, turn) -> QtWidgets.QComboBox:
         if turn == Chess.RED:
             return self.red_engine
@@ -157,6 +174,8 @@ class SettingsDialog(BaseDialog):
                     logger.info("set %s %s", name, value)
             else:
                 raise Exception(str(attr))
+
+        self.update_mode(self.get_mode())
 
     def get_mode(self):
         return self.ui.mode.currentIndex()
