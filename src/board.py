@@ -133,6 +133,15 @@ class Board(QLabel):
         self.check = None
         self.reverse = False
 
+        font = QtGui.QFont()
+        font.setFamily(u"DengXian")
+        font.setPointSize(self.csize / 4)
+        self.label = QtWidgets.QLabel(parent)
+        self.label.setFont(font)
+        self.label.setAlignment(QtCore.Qt.AlignCenter)
+        self.label.setText("")
+        self.label.lower()  # 控件放在最下层
+
         self.update()
 
         self.callback = callback
@@ -160,7 +169,11 @@ class Board(QLabel):
         self.check = check
         self.signal.refresh.emit()
 
-    def move(self, board, fpos, tpos, callback=None):
+    def move(self, board, fpos, tpos, callback=None, animate=True):
+        if not animate and callable(callback):
+            callback()
+            return
+
         # 棋盘动画
 
         label = self.getLabel(fpos)
@@ -210,6 +223,14 @@ class Board(QLabel):
 
         super().update()
 
+    def resizeLabel(self):
+        w = self.parentWidget().width()
+        h = self.parentWidget().height()
+        self.label.setGeometry(0, 0, w, h)
+        font = self.label.font()
+        font.setPointSize(self.csize / 4)
+        self.label.setFont(font)
+
     def resizeEvent(self, event):
         # 窗口大小变化之后，修改棋盘和棋子的大小
 
@@ -231,7 +252,7 @@ class Board(QLabel):
         self.setGeometry(x, y, width, height)
 
         self.csize = width // Chess.W
-
+        self.resizeLabel()
         self.refresh()
 
     def mousePressEvent(self, event):
@@ -335,6 +356,7 @@ def main():
     import sys
     app = QtWidgets.QApplication(sys.argv)
     ui = BoardFrame()
+    ui.board.setBoard(Chess.ORIGIN)
     ui.show()
     app.exec_()
 

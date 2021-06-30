@@ -1,6 +1,7 @@
 # coding=utf-8
 
 import os
+import time
 
 from PySide2 import QtCore
 from PySide2 import QtWidgets
@@ -29,6 +30,16 @@ class Signal(QtCore.QObject):
     refresh = QtCore.Signal(None)
 
 
+class Params(object):
+
+    def __init__(self):
+        self.red_time = 100000
+        self.black_time = 100000
+        self.red_steps = 1000
+        self.black_steps = 1000
+        self.start_time = int(time.time() * 1000)
+
+
 class Settings(QtWidgets.QDialog):
 
     ATTRIBUTES = {
@@ -37,32 +48,6 @@ class Settings(QtWidgets.QDialog):
 
         'version',
         'checkupdate',
-
-        'transprancy',
-        'audio',
-        'reverse',
-        'delay',
-        'standard_method',
-
-        'redside',
-        'blackside',
-
-        'red_engine',
-        'black_engine',
-
-        'mode',
-
-        'red_depth',
-        'black_depth',
-
-        'red_time',
-        'black_time',
-
-        'red_steps',
-        'black_steps',
-
-        'red_increment',
-        'black_increment',
     }
 
     SETTINGS = {
@@ -70,6 +55,7 @@ class Settings(QtWidgets.QDialog):
         'audio': True,
         'reverse': False,
         'delay': 300,
+        'animate': True,
         'standard_method': False,
 
         'redside': 0,
@@ -83,15 +69,23 @@ class Settings(QtWidgets.QDialog):
         'red_depth': 7,
         'black_depth': 1,
 
-        'red_time': 5000,
-        'black_time': 5000,
+        'red_time': 60000,
+        'black_time': 6000,
 
         'red_steps': 200,
-        'black_steps': 200,
+        'black_steps': 50,
 
         'red_increment': 3000,
-        'black_increment': 3000,
+        'black_increment': 1000,
     }
+
+    ATTRIBUTES.update(
+        SETTINGS.keys()
+    )
+
+    MODE_DEPTH = 0
+    MODE_INCREMENT = 1
+    MODE_STEPS = 2
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -123,6 +117,10 @@ class Settings(QtWidgets.QDialog):
         self.cancel.clicked.connect(self.close)
         self.cancel.clicked.connect(lambda: self.set_settings(self.backup))
         self.mode.currentIndexChanged.connect(self.update_mode)
+        self.mode.currentIndexChanged.connect(self.reset_time)
+
+        self.params = Params()
+
         self.update_mode(0)
 
         self.setup_engines()
@@ -225,39 +223,73 @@ class Settings(QtWidgets.QDialog):
             else:
                 raise Exception(str(attr))
 
+    def get_mode(self):
+        return self.ui.mode.currentIndex()
+
+    def timestramp(self):
+        return int(time.time() * 1000)
+
+    def reset_time(self):
+        self.params.start_time = self.timestramp()
+        self.params.red_time = self.ui.red_time.value()
+        self.params.black_time = self.ui.black_time.value()
+        self.params.red_steps = self.ui.red_steps.value()
+        self.params.black_steps = self.ui.black_steps.value()
+
+    def switch_time(self, turn):
+        mode = self.get_mode()
+        if mode == self.MODE_DEPTH:
+            return
+
+        timestamp = self.timestramp()
+        interval = timestamp - self.params.start_time
+        self.params.start_time = timestamp
+        if turn == Chess.BLACK:
+            self.params.red_time -= interval
+            if mode == self.MODE_INCREMENT:
+                self.params.red_time += self.ui.red_increment.value()
+            elif mode == self.MODE_STEPS:
+                self.params.red_steps -= 1
+        else:
+            self.params.black_time -= interval
+            if mode == self.MODE_INCREMENT:
+                self.params.black_time += self.ui.black_increment.value()
+            elif mode == self.MODE_STEPS:
+                self.params.black_steps -= 1
+
     def go_params(self, turn):
-        idx = self.mode.currentIndex()
+        mode = self.get_mode()
         params = attrdict()
-        if idx == 0:
+        if mode == self.MODE_DEPTH:
             # 深度制
             if turn == Chess.RED:
                 params.depth = self.red_depth.value()
             else:
                 params.depth = self.black_depth.value()
-        elif idx == 1:
+        elif mode == self.MODE_INCREMENT:
             #  加时制
             if turn == Chess.RED:
-                params.time = self.red_time.value()
+                params.time = self.params.red_time
                 params.increment = self.red_increment.value()
-                params.opptime = self.black_time.value()
+                params.opptime = self.params.black_time
                 params.oppincrement = self.black_increment.value()
             else:
-                params.time = self.black_time.value()
+                params.time = self.params.black_time
                 params.increment = self.black_increment.value()
-                params.opptime = self.red_time.value()
+                params.opptime = self.params.red_time
                 params.oppincrement = self.red_increment.value()
-        elif idx == 2:
+        elif mode == self.MODE_STEPS:
             # 时段制
             if turn == Chess.RED:
-                params.time = self.red_time.value()
-                params.movestogo = self.red_steps.value()
-                params.opptime = self.black_time.value()
-                params.oppmovestogo = self.black_steps.value()
+                params.time = self.params.red_time
+                params.movestogo = self.params.red_steps
+                params.opptime = self.params.black_time
+                params.oppmovestogo = self.params.black_steps
             else:
-                params.time = self.black_time.value()
-                params.movestogo = self.black_steps.value()
-                params.opptime = self.red_time.value()
-                params.oppmovestogo = self.red_steps.value()
+                params.time = self.params.black_time
+                params.movestogo = self.params.black_steps
+                params.opptime = self.params.red_time
+                params.oppmovestogo = self.params.red_steps
         else:
             raise Exception("invalid engine mode")
         return params

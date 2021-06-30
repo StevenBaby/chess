@@ -3,6 +3,7 @@
 import sys
 import time
 from functools import partial
+from typing import Set
 
 from PySide2 import QtWidgets
 from PySide2 import QtCore
@@ -56,6 +57,7 @@ class GameSignal(QtCore.QObject):
     method = QtCore.Signal(None)
     arrange = QtCore.Signal(None)
     thinking = QtCore.Signal(bool)
+    refresh = QtCore.Signal(None)
 
 
 class GameContextMenu(BaseContextMenu):
@@ -91,6 +93,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         super().__init__(parent, board_class=ArrangeBoard)
         self.setWindowTitle(f"中国象棋 v{VERSION}")
         self.setupContextMenu()
+        self.settings = Settings(self)
 
         audio.init()
 
@@ -112,12 +115,13 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.method = Method(self)
         self.method.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
 
-        self.settings = Settings(self)
         self.settings.setWindowIcon(QtGui.QIcon(self.board.FAVICON))
 
         self.game_menu = GameContextMenu(self, self.game_signal)
 
         self.toast = Toast(self)
+        self.timer = QtCore.QTimer(self)
+        self.timer.timeout.connect(self.updateLabel)
 
         # 以下初始化信号
 
@@ -143,6 +147,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.animate.connect(self.animate)
 
+        self.game_signal.refresh.connect(self.updateLabel)
+
         self.settings.transprancy.valueChanged.connect(
             lambda e: self.setWindowOpacity((100 - e) / 100)
         )
@@ -161,6 +167,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.settings.ok.clicked.connect(self.accepted)
         self.settings.loads()
+        self.settings.reset_time()
 
         self.game_signal.arrange.connect(self.arrange)
         self.board.signal.finish.connect(self.finish_arrange)
@@ -185,7 +192,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_menu.exec_(self.mapToGlobal(point))
 
     def update_action_state(self):
-        if len(self.engine_side) == 2 and not self.engine.checkmate:
+        if len(self.engine_side) == 2 and not self.checkmate:
             self.game_menu.setAllMenuEnabled(False)
             self.game_menu.setAllShortcutEnabled(False)
         elif self.thinking:
@@ -197,8 +204,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     def set_thinking(self, thinking):
         self.thinking = thinking
-        logger.debug("set thinking %s", self.thinking)
-        if len(self.engine_side) == 2 and not self.engine.checkmate:
+        # logger.debug("set thinking %s", self.thinking)
+        if len(self.engine_side) == 2 and not self.checkmate:
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
         elif self.thinking:
             QtWidgets.QApplication.setOverrideCursor(QtCore.Qt.BusyCursor)
@@ -232,6 +239,13 @@ class Game(BoardFrame, BaseContextMenuWidget):
             return
         self.updateBoard()
 
+    def resetTimer(self):
+        if self.settings.get_mode() in (Settings.MODE_INCREMENT, Settings.MODE_STEPS):
+            if not self.timer.isActive():
+                self.timer.start(300)
+        else:
+            self.updateLabel()
+
     def accepted(self):
         logger.info("setting accepted....")
 
@@ -263,17 +277,20 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.method.list.setEnabled(False)
         else:
             self.method.list.setEnabled(True)
-        self.update_action_state()
 
+        self.resetTimer()
+
+        self.update_action_state()
+        self.updateBoard()
         self.try_engine_move()
 
     def try_engine_move(self):
-        if self.engine.sit.turn not in self.engine_side:
+        if self.turn not in self.engine_side:
             return
         self.go()
 
     def go(self):
-        if self.engine.checkmate:
+        if self.checkmate:
             self.game_signal.checkmate.emit()
             logger.debug('engine is checkmated hint ignored...')
             return
@@ -281,7 +298,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         engine = self.current_engine()
         engine.position(self.engine.sit.format_fen())
 
-        engine.go(**self.settings.go_params(self.engine.sit.turn))
+        engine.go(**self.settings.go_params(self.turn))
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -323,7 +340,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.board.setCheck(None)
         self.try_engine_move()
 
-        self.params = self.settings.go_params(Chess.RED)
+        self.settings.reset_time()
+        self.resetTimer()
 
         self.method.refresh(self.engine)
 
@@ -342,7 +360,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.engine.redo()
             logger.debug('engine redo result %d', self.engine.sit.result)
             self.game_signal.move.emit(self.engine.sit.result)
-            if self.engine.checkmate:
+            if self.checkmate:
                 self.game_signal.checkmate.emit()
             if self.engine.sit.turn in self.human_side:
                 break
@@ -429,11 +447,39 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
-        self.board.move(self.engine.sit.board, fpos, tpos, self.updateBoard)
+        self.board.move(
+            self.engine.sit.board, fpos, tpos,
+            self.updateBoard,
+            self.settings.animate.isChecked())
+
+    @property
+    def turn(self):
+        return self.engine.sit.turn
+
+    @property
+    def checkmate(self):
+        if self.engine.checkmate:
+            return self.engine.checkmate
+        mode = self.settings.get_mode()
+        if mode == Settings.MODE_DEPTH:
+            return self.engine.checkmate
+
+        if mode in (Settings.MODE_INCREMENT, Settings.MODE_STEPS):
+            if self.turn == Chess.RED and self.settings.params.red_time < 0:
+                return True
+            if self.turn == Chess.BLACK and self.settings.params.black_time < 0:
+                return True
+        if mode == Settings.MODE_STEPS:
+            if self.turn == Chess.RED and self.settings.params.red_steps < 0:
+                return True
+            if self.turn == Chess.BLACK and self.settings.params.black_steps < 0:
+                return True
+
+        return False
 
     def move(self, fpos, tpos):
         self.game_signal.thinking.emit(False)
-        if self.engine.checkmate:
+        if self.checkmate:
             self.game_signal.checkmate.emit()
             return
 
@@ -441,6 +487,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
         logger.debug('move result %s', result)
         if not result:
             return
+
+        self.settings.switch_time(self.turn)
 
         if result != Chess.INVALID:
             self.game_signal.animate.emit(fpos, tpos)
@@ -453,7 +501,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.move.emit(result)
 
-        if result == Chess.CHECKMATE:
+        if self.checkmate:
             logger.debug("emit checkmate")
             self.game_signal.checkmate.emit()
             return
@@ -472,11 +520,41 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.engine.sit.fpos,
             self.engine.sit.tpos
         )
+        self.game_signal.refresh.emit()
 
-    @QtCore.Slot(None)
-    def checkmateMessage(self):
-        if not self.engine.checkmate:
+    def updateLabel(self):
+        if self.settings.get_mode() == Settings.MODE_DEPTH:
+            self.board.label.setText('')
             return
+        if self.checkmate:
+            self.game_signal.checkmate.emit()
+            return
+
+        red_time = self.settings.params.red_time
+        black_time = self.settings.params.black_time
+        interval = self.settings.timestramp() - self.settings.params.start_time
+        if self.turn == Chess.RED:
+            red_time -= interval
+            if red_time < 0:
+                self.settings.params.red_time = red_time
+                self.game_signal.checkmate.emit()
+                return
+        else:
+            black_time -= interval
+            if black_time < 0:
+                self.settings.params.black_time = black_time
+                self.game_signal.checkmate.emit()
+                return
+
+        self.board.label.setText(f"红方：{red_time // 1000:03}\n黑方：{black_time // 1000:03}")
+
+    def checkmateMessage(self):
+        if not self.checkmate:
+            return
+
+        if self.timer.isActive():
+            self.timer.stop()
+
         if self.engine.sit.turn == Chess.RED:
             self.toast.message("黑方胜!!!")
             # QtWidgets.QMessageBox(self).warning(self, '信息', '')
