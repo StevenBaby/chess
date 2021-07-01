@@ -505,11 +505,10 @@ class UCCIEngine(PipeEngine):
                     type = Chess.RESIGN
 
         elif instruct == 'nobestmove':
-            self.running = False
             if self.sit.idle > 100:
                 type = Chess.DRAW
             else:
-                type = Chess.CHECKMATE
+                type = Chess.NOBESTMOVE
         else:
             logger.warning(instruct)
             return

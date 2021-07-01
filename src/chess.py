@@ -115,3 +115,4 @@ class Chess(object):
     # 以下为引擎专用
     INFO = 9
     POPHASH = 10
+    NOBESTMOVE = 11

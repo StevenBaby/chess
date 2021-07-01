@@ -46,9 +46,10 @@ class GameSignal(QtCore.QObject):
     paste = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
-    checkmate = QtCore.Signal(None)
     draw = QtCore.Signal(None)
     resign = QtCore.Signal(None)
+    checkmate = QtCore.Signal(None)
+    nobestmove = QtCore.Signal(None)
 
     animate = QtCore.Signal(tuple, tuple)
     settings = QtCore.Signal(None)
@@ -64,7 +65,7 @@ class GameContextMenu(BaseContextMenu):
         ('悔棋', 'Ctrl+Z', lambda self: self.signal.undo.emit(), True),
         ('重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit(), True),
         'separator',
-        ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), True),
+        ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), False),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
         ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), False),
         'separator',
@@ -136,6 +137,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.checkmate.connect(self.checkmateMessage)
         self.game_signal.checkmate.connect(lambda: self.set_thinking(False))
+
+        self.game_signal.nobestmove.connect(self.nobestmove)
 
         self.game_signal.draw.connect(lambda: self.toast.message('和棋！！！'))
         self.game_signal.resign.connect(lambda: self.toast.message('认输了！！！'))
@@ -282,6 +285,14 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         params = self.settings.get_params(self.engine.sit.turn)
         engine.go(**params)
+
+    def nobestmove(self):
+        if self.engine.sit.turn == Chess.RED:
+            side = '黑方'
+        else:
+            side = '红方'
+        logger.debug('nobestmove')
+        self.toast.message(f"{side}行棋违例！")
 
     @QtCore.Slot(int)
     def play(self, audio_type):
@@ -500,7 +511,9 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.game_signal.resign.emit()
         elif type == Chess.CHECKMATE:
             pass
-            # self.signal.checkmate.emit()
+            # self.game_signal.checkmate.emit()
+        elif type == Chess.NOBESTMOVE:
+            self.game_signal.nobestmove.emit()
 
     def board_callback(self, pos):
         if self.engine.sit.where_turn(pos) == self.engine.sit.turn:
