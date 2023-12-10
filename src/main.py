@@ -4,6 +4,8 @@ import sys
 import time
 from functools import partial
 
+import keyboard
+
 from PySide2 import QtWidgets
 from PySide2 import QtCore
 from PySide2 import QtGui
@@ -56,6 +58,7 @@ class GameSignal(QtCore.QObject):
     method = QtCore.Signal(None)
     arrange = QtCore.Signal(None)
     thinking = QtCore.Signal(bool)
+    reverse = QtCore.Signal(None)
 
 
 class GameContextMenu(BaseContextMenu):
@@ -68,6 +71,7 @@ class GameContextMenu(BaseContextMenu):
         ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), False),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
         ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), False),
+        ('反转', 'Ctrl+I', lambda self: self.signal.reverse.emit(), False),
         'separator',
         ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
@@ -121,6 +125,9 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         # 以下初始化信号
 
+        keyboard.add_hotkey('ctrl+alt+z', lambda: self.game_signal.hint.emit())
+
+        self.game_signal.reverse.connect(self.reverse)
         self.game_signal.thinking.connect(self.set_thinking)
         self.game_signal.settings.connect(self.settings.show)
         self.game_signal.hint.connect(self.hint)
@@ -319,6 +326,12 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
     def current_engine(self) -> Engine:
         return self.engines[self.engine.sit.turn]
+
+    def reverse(self):
+        logger.debug("reverse")
+        check = self.settings.reverse.isChecked()
+        self.settings.reverse.setChecked(not check)
+        self.settings.save()
 
     def reset(self):
         self.init_engines()
