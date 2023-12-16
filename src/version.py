@@ -1,6 +1,6 @@
 # coding=utf-8
 
-VERSION = '1.9.1'
+VERSION = '2.0.2'
 __VERSION__ = VERSION
 
 

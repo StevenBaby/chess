@@ -4,12 +4,16 @@ VERSION:= $(shell python -c "from src import version; print(version.VERSION) ")
 build: dist/chess-$(VERSION).exe dist/chess.exe
 	-
 
+# FLAGS+= -F
+FLAGS+= -w
+FLAGS+= --name chess-$(VERSION)
+
 dist/chess-$(VERSION).exe: src/main.py
 	pyinstaller $< -i src/images/favicon.ico \
 		--add-data 'src/images;images' \
 		--add-data 'src/engines;engines' \
 		--add-data 'src/audios;audios' \
-		-F -w --name chess-$(VERSION)
+		$(FLAGS)
 	python -c "from src import version; version.increase();"
 
 dist/chess.exe: dist/chess-$(VERSION).exe
