@@ -18,6 +18,7 @@ from engine import Chess
 from engine import dirpath
 from engine import logger
 from engines import UCCI_ENGINES
+from situation import Situation
 
 import audio
 import engines
@@ -33,6 +34,7 @@ from context import BaseContextMenuWidget
 
 from arrange import ArrangeBoard
 from manual import Manual
+import qqchess
 
 
 class GameSignal(QtCore.QObject):
@@ -46,6 +48,9 @@ class GameSignal(QtCore.QObject):
     load = QtCore.Signal(None)
     save = QtCore.Signal(None)
     paste = QtCore.Signal(None)
+    capture = QtCore.Signal(None)
+    setcapture = QtCore.Signal(None)
+    train = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
     draw = QtCore.Signal(None)
@@ -76,6 +81,8 @@ class GameContextMenu(BaseContextMenu):
         ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
         ('保存', 'Ctrl+S', lambda self: self.signal.save.emit(), True),
+        ('截屏', 'Ctrl+K', lambda self: self.signal.capture.emit(), True),
+        ('屏幕', 'Ctrl+P', lambda self: self.signal.setcapture.emit(), True),
         'separator',
         ('设置', 'Ctrl+,', lambda self: self.signal.settings.emit(), False),
     ]
@@ -84,6 +91,7 @@ class GameContextMenu(BaseContextMenu):
         items.extend(
             [
                 ('调试', 'Ctrl+D', lambda self: self.signal.debug.emit(), False),
+                ('训练', 'Ctrl+T', lambda self: self.signal.train.emit(), True),
                 'separator',
             ]
         )
@@ -97,6 +105,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.setupContextMenu()
 
         audio.init()
+
+        self.image = None
+
+        self.qqboard = qqchess.Capturer()
 
         self.engine = None
         self.engines = {
@@ -125,7 +137,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         # 以下初始化信号
 
-        keyboard.add_hotkey('ctrl+alt+z', lambda: self.game_signal.hint.emit())
+        keyboard.add_hotkey(
+            'ctrl+alt+z', lambda: self.game_signal.capture.emit())
+        keyboard.add_hotkey(
+            'ctrl+alt+x', lambda: self.game_signal.hint.emit())
 
         self.game_signal.reverse.connect(self.reverse)
         self.game_signal.thinking.connect(self.set_thinking)
@@ -139,6 +154,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.load.connect(self.load)
         self.game_signal.save.connect(self.save)
         self.game_signal.paste.connect(self.paste)
+        self.game_signal.train.connect(self.train)
+        self.game_signal.capture.connect(self.capture)
+        self.game_signal.setcapture.connect(self.setcapture)
+        self.qqboard.signal.capture.connect(self.capture_image)
 
         self.game_signal.move.connect(self.play)
 
@@ -381,6 +400,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
     @QtCore.Slot(None)
     def debug(self):
         logger.debug("debug slot.....")
+        qqchess.show(self.image)
         # logger.debug(self.engine.sit.format_fen())
 
     @QtCore.Slot(None)
@@ -447,7 +467,52 @@ class Game(BoardFrame, BaseContextMenuWidget):
     def paste(self):
         content = QtWidgets.QApplication.clipboard().text()
         logger.debug('Clipboard text %s', content)
-        self.pasre_content(content)
+        if content:
+            self.pasre_content(content)
+            return
+
+        image = qqchess.ImageGrab.grabclipboard()
+        if isinstance(image, qqchess.Image.Image):
+            self.paste_image(image)
+
+    def setcapture(self):
+        self.qqboard.setGeometry(QtCore.QRect(*self.settings.qqboard))
+        self.qqboard.show()
+
+    def capture(self):
+        logger.debug("capture...")
+        self.qqboard.signal.capture.emit(None)
+
+    def capture_image(self, image: qqchess.Image.Image):
+        if image is not None:
+            rect = self.qqboard.geometry()
+            self.settings.qqboard = [
+                rect.x(),
+                rect.y(),
+                rect.width(),
+                rect.height()]
+            self.settings.save()
+        else:
+            image = self.qqboard.screenshot()
+        self.paste_image(image)
+
+    def paste_image(self, image: qqchess.Image.Image):
+        board = qqchess.get_board(image)
+        if board is None:
+            self.toast.message("解析失败，请检查截屏框！")
+            return
+
+        self.image = image
+        self.engine.close()
+        self.engine = Engine()
+
+        self.engine.sit = Situation(board)
+        self.updateBoard()
+
+        self.try_engine_move()
+
+    def train(self):
+        qqchess.train()
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
@@ -470,6 +535,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         if result != Chess.INVALID:
             self.game_signal.animate.emit(fpos, tpos)
+        else:
+            return
 
         if self.engine.sit.check:
             self.board.setCheck(self.engine.sit.check)

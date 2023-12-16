@@ -59,6 +59,7 @@ class SettingsDialog(BaseDialog):
 
         'red_time': 1000,
         'black_time': 1000,
+        'qqboard': [842, 230, 1196, 1330],
     }
 
     ATTRIBUTES.update(
@@ -75,6 +76,10 @@ class SettingsDialog(BaseDialog):
         self.ui.setupUi(self)
 
         for name in self.ATTRIBUTES:
+            if not hasattr(self.ui, name):
+                setattr(self, name, self.SETTINGS[name])
+                continue
+
             attr = getattr(self.ui, name)
             setattr(self, name, attr)
             logger.info("set settings attr %s object %s", name, attr)
@@ -147,6 +152,8 @@ class SettingsDialog(BaseDialog):
                 value = attr.isChecked()
             elif isinstance(attr, QtWidgets.QComboBox):
                 value = attr.currentIndex()
+            elif isinstance(attr, list):
+                value = attr
             else:
                 raise Exception(str(attr))
             data[name] = value
@@ -172,6 +179,8 @@ class SettingsDialog(BaseDialog):
                 if attr.currentIndex() != value:
                     attr.setCurrentIndex(value)
                     logger.info("set %s %s", name, value)
+            elif isinstance(attr, list):
+                ...
             else:
                 raise Exception(str(attr))
 
