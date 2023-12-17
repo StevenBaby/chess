@@ -4,6 +4,8 @@ import sys
 import time
 from functools import partial
 
+import numpy as np
+
 import keyboard
 
 from PySide2 import QtWidgets
@@ -108,8 +110,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.image = None
 
-        self.qqboard = qqchess.Capturer()
-
         self.engine = None
         self.engines = {
             Chess.RED: None,
@@ -157,7 +157,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.train.connect(self.train)
         self.game_signal.capture.connect(self.capture)
         self.game_signal.setcapture.connect(self.setcapture)
-        self.qqboard.signal.capture.connect(self.capture_image)
 
         self.game_signal.move.connect(self.play)
 
@@ -195,6 +194,11 @@ class Game(BoardFrame, BaseContextMenuWidget):
 
         self.game_signal.method.connect(self.method.show)
         self.method.list.currentItemChanged.connect(self.method_changed)
+
+        self.qqboard = qqchess.Capturer(self)
+        logger.info("set qqboard %s", self.settings.qqboard)
+        self.qqboard.setGeometry(*self.settings.qqboard)
+        self.qqboard.signal.capture.connect(self.capture_image)
 
         self.reset()
         self.accepted()
@@ -476,7 +480,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
             self.paste_image(image)
 
     def setcapture(self):
-        self.qqboard.setGeometry(QtCore.QRect(*self.settings.qqboard))
+        logger.debug("set capture....")
+        self.qqboard.setGeometry(*self.settings.qqboard)
         self.qqboard.show()
 
     def capture(self):
@@ -484,6 +489,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.qqboard.signal.capture.emit(None)
 
     def capture_image(self, image: qqchess.Image.Image):
+        if not self.qqboard.inited:
+            self.setcapture()
+            return
+
         if image is not None:
             rect = self.qqboard.geometry()
             self.settings.qqboard = [
@@ -499,14 +508,27 @@ class Game(BoardFrame, BaseContextMenuWidget):
     def paste_image(self, image: qqchess.Image.Image):
         board = qqchess.get_board(image)
         if board is None:
+            logger.debug(self.qqboard.geometry())
             self.toast.message("解析失败，请检查截屏框！")
             return
 
-        self.image = image
-        self.engine.close()
-        self.engine = Engine()
+        wheres = np.argwhere(board == Chess.K)
+        if len(wheres) == 0:
+            self.toast.message("解析失败，请检查截屏框！")
+            return
 
-        self.engine.sit = Situation(board)
+        turn = Chess.RED
+        self.settings.reverse.setChecked(False)
+        if wheres[0][1] < 3:
+            logger.debug("reversed")
+            board = board[::-1, ::-1]
+            self.settings.reverse.setChecked(True)
+            turn = Chess.BLACK
+
+        self.image = image
+        # self.engine.close()
+        # self.engine = Engine()
+        self.engine.sit = Situation(board, turn=turn)
         self.updateBoard()
 
         self.try_engine_move()

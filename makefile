@@ -5,7 +5,7 @@ build: dist/chess-$(VERSION).exe dist/chess.exe
 	-
 
 # FLAGS+= -F
-FLAGS+= -w
+# FLAGS+= -w
 FLAGS+= --name chess-$(VERSION)
 
 dist/chess-$(VERSION).exe: src/main.py
@@ -17,7 +17,8 @@ dist/chess-$(VERSION).exe: src/main.py
 	python -c "from src import version; version.increase();"
 
 dist/chess.exe: dist/chess-$(VERSION).exe
-	cp $< $@
+	# cp $< $@
+	-
 
 .PHONY: debug
 debug: dist/chess-$(VERSION)-debug.exe

@@ -150,7 +150,13 @@ class Dataset(torch.utils.data.Dataset):
         qqboard = Image.open(QQBOARD).convert("RGB")
 
         for offset in range(-20, 20):
-            image = qqboard.crop((offset, offset, qqboard.size[0] + offset, qqboard.size[1] + offset))
+            image = qqboard.crop(
+                (offset,
+                 offset,
+                 qqboard.size[0] +
+                 offset,
+                 qqboard.size[1] +
+                 offset))
             images, locs, _ = make_board(image)
             self.images.append(images)
             for loc in locs:
@@ -286,23 +292,28 @@ class CapturerSignal(QtCore.QObject):
     capture = QtCore.Signal(Image.Image)
 
 
-class Capturer(QtWidgets.QLabel):
+class Capturer(QtWidgets.QDialog):
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, parent=None):
+        super().__init__(parent)
         self.offset = None
         self.setWindowTitle(f"截屏")
         self.setWindowIcon(QtGui.QIcon(Board.FAVICON))
 
         self.signal = CapturerSignal()
 
-        self.image = QtGui.QPixmap(QQBOARD)
         self.capture = None
         self.result = QtWidgets.QLabel()
+        self.inited = False
 
-        self.setPixmap(self.image)
+        # self.image = QtGui.QPixmap(QQBOARD)
+        # self.setPixmap(self.image)
+        # self.setScaledContents(True)
+        self.resize(720, 800)
+        self.move(
+            self.screen().availableGeometry().center() -
+            self.rect().center())
 
-        self.setScaledContents(True)
         self.setWindowOpacity(0.5)
         # self.setWindowFlag(Qt.WindowType.Tool)
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
@@ -334,6 +345,7 @@ class Capturer(QtWidgets.QLabel):
             self.close()
         if ev.key() == Qt.Key_Return:
             self.close()
+            self.inited = True
             self.signal.capture.emit(self.screenshot())
 
         return super().keyPressEvent(ev)

@@ -180,7 +180,8 @@ class SettingsDialog(BaseDialog):
                     attr.setCurrentIndex(value)
                     logger.info("set %s %s", name, value)
             elif isinstance(attr, list):
-                ...
+                logger.info("list name %s old %s new %s", name, attr, value)
+                setattr(self, name, value)
             else:
                 raise Exception(str(attr))
 
