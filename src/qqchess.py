@@ -251,6 +251,67 @@ def get_board(image):
     for i, k in enumerate(pred):
         board[locs[i]] = keys[int(k)]
 
+    # 验证数量
+    wheres = np.argwhere((board == C.K) | (board == C.k))
+    if len(wheres) != 2:
+        logger.warning("bishop count error %s...", len(wheres))
+        return None
+
+    for where in wheres:
+        if where[0] < 3 or where[0] > 5:
+            logger.warning("king location error %s...", where)
+            return None
+        if 2 < where[1] < 7:
+            logger.warning("king location error %s...", where)
+            return None
+
+    counts = {
+        C.P: 5,
+        C.R: 2,
+        C.N: 2,
+        C.B: 2,
+        C.A: 2,
+        C.C: 2,
+        C.p: 5,
+        C.r: 2,
+        C.n: 2,
+        C.b: 2,
+        C.a: 2,
+        C.c: 2,
+    }
+
+    for key, count in counts.items():
+        wheres = np.argwhere(board == key)
+        if len(wheres) > count:
+            logger.warning("chess count error %s > %s...", len(wheres), count)
+            return None
+
+    wheres = np.argwhere((board == C.B) | (board == C.B))
+    for where in wheres:
+        if tuple(where) not in {
+            (2, 0), (6, 0),
+            (0, 2), (4, 2), (8, 2),
+            (2, 4), (6, 4),
+            (2, 5), (6, 5),
+            (0, 7), (4, 7), (8, 7),
+            (2, 9), (6, 9),
+        }:
+            logger.warning("bishop location error %s...", where)
+            return None
+
+    wheres = np.argwhere((board == C.A) | (board == C.a))
+    for where in wheres:
+        if tuple(where) not in {
+            (3, 0), (5, 0),
+            (4, 1),
+            (3, 2), (5, 2),
+            (3, 7), (5, 7),
+            (4, 8),
+            (3, 9), (5, 9),
+        }:
+            logger.warning("advisor location error %s...", where)
+            return None
+
     return board
 
 

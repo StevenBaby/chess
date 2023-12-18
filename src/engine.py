@@ -117,6 +117,7 @@ class Engine(threading.Thread):
         self.sit = self.stack[self.index]
 
     def move(self, fpos, tpos):
+        logger.info("move from %s to %s", fpos, tpos)
         # logger.debug('start move stack %s index %s', self.stack, self.index)
 
         nidx = self.index + 1

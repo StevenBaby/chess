@@ -141,6 +141,8 @@ class Game(BoardFrame, BaseContextMenuWidget):
             'ctrl+alt+z', lambda: self.game_signal.capture.emit())
         keyboard.add_hotkey(
             'ctrl+alt+x', lambda: self.game_signal.hint.emit())
+        keyboard.add_hotkey(
+            'ctrl+alt+m', lambda: self.game_signal.method.emit())
 
         self.game_signal.reverse.connect(self.reverse)
         self.game_signal.thinking.connect(self.set_thinking)
@@ -192,7 +194,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.arrange.connect(self.arrange)
         self.board.signal.finish.connect(self.finish_arrange)
 
-        self.game_signal.method.connect(self.method.show)
+        self.game_signal.method.connect(lambda: self.method.setVisible(not self.method.isVisible()))
         self.method.list.currentItemChanged.connect(self.method_changed)
 
         self.qqboard = qqchess.Capturer(self)
@@ -513,9 +515,6 @@ class Game(BoardFrame, BaseContextMenuWidget):
             return
 
         wheres = np.argwhere(board == Chess.K)
-        if len(wheres) == 0:
-            self.toast.message("解析失败，请检查截屏框！")
-            return
 
         turn = Chess.RED
         self.settings.reverse.setChecked(False)
@@ -526,12 +525,32 @@ class Game(BoardFrame, BaseContextMenuWidget):
             turn = Chess.BLACK
 
         self.image = image
-        # self.engine.close()
-        # self.engine = Engine()
-        self.engine.sit = Situation(board, turn=turn)
-        self.updateBoard()
 
-        self.try_engine_move()
+        wheres = np.argwhere((board - self.engine.sit.board) != 0)
+        logger.debug("wheres %s", wheres)
+        if len(wheres) == 0:
+            return
+
+        if len(wheres) == 2:
+            pos1 = tuple(wheres[0])
+            pos2 = tuple(wheres[1])
+            assert (board[pos1] == 0 or board[pos2] == 0)
+            assert (board[pos1] != 0 or board[pos2] != 0)
+            if board[pos1] == 0:
+                self.move(pos1, pos2)
+            else:
+                self.move(pos2, pos1)
+        else:
+            logger.info("reset engine situation")
+            # self.engine.close()
+            # self.engine = Engine()
+            self.engine.index = 0
+            self.engine.sit = Situation(board, turn=turn)
+            self.engine.stack = [self.engine.sit]
+            self.fpos = None
+
+            self.updateBoard()
+            self.try_engine_move()
 
     def train(self):
         qqchess.train()
