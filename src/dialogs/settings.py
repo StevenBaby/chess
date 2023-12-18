@@ -60,6 +60,7 @@ class SettingsDialog(BaseDialog):
         'red_time': 1000,
         'black_time': 1000,
         'qqboard': [842, 230, 1196, 1330],
+        'ontop': False,
     }
 
     ATTRIBUTES.update(

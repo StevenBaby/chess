@@ -188,13 +188,17 @@ class Game(BoardFrame, BaseContextMenuWidget):
             lambda e: self.method.set_standard(e)
         )
 
+        self.settings.ontop.clicked.connect(self.set_on_top)
+
         self.settings.ok.clicked.connect(self.accepted)
         self.settings.loads()
 
         self.game_signal.arrange.connect(self.arrange)
         self.board.signal.finish.connect(self.finish_arrange)
 
-        self.game_signal.method.connect(lambda: self.method.setVisible(not self.method.isVisible()))
+        self.game_signal.method.connect(
+            lambda: self.method.setVisible(
+                not self.method.isVisible()))
         self.method.list.currentItemChanged.connect(self.method_changed)
 
         self.qqboard = qqchess.Capturer(self)
@@ -205,6 +209,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.reset()
         self.accepted()
         self.check_openfile()
+
+    def set_on_top(self):
+        logger.info("set on top")
+        # self.setWindowFlags(QtCore.Qt.WindowStaysOnTopHint)
 
     def check_openfile(self):
         # 直接打开棋谱文件
