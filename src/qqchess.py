@@ -19,8 +19,13 @@ import cv2
 from PySide2 import (
     QtWidgets,
     QtGui,
-    QtCore
+    QtCore,
 )
+
+from PySide2.QtGui import (
+    QGuiApplication,
+)
+
 from PySide2.QtCore import (
     Qt
 )
@@ -375,7 +380,7 @@ class Capturer(QtWidgets.QDialog):
             self.screen().availableGeometry().center() -
             self.rect().center())
 
-        self.setWindowOpacity(0.5)
+        self.setWindowOpacity(0.7)
         # self.setWindowFlag(Qt.WindowType.Tool)
         self.setWindowFlag(Qt.WindowType.FramelessWindowHint)
         self.setWindowFlag(Qt.WindowType.WindowStaysOnTopHint)
@@ -391,10 +396,18 @@ class Capturer(QtWidgets.QDialog):
             self.grips.append(grip)
 
     def screenshot(self):
+        pscreen = QGuiApplication.screens()[0]
+        screen = self.screen()
         rect = self.geometry()
         logger.debug(rect)
+
+        x = rect.x()
+        if pscreen != screen:
+            x -= pscreen.geometry().width()
+
         pixmap = self.screen().grabWindow(
-            0, rect.x(), rect.y(), rect.width(), rect.height())
+            0, x, rect.y(), rect.width(), rect.height())
+
         # self.result.setPixmap(pixmap)
         # self.result.show()
         # self.result.setScaledContents(True)
