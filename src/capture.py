@@ -11,6 +11,8 @@ def capture(window_name):
     windll.shcore.SetProcessDpiAwareness(PROCESS_PER_MONITOR_DPI_AWARE)
 
     hwnd = win32gui.FindWindow(None, window_name)
+    if not hwnd:
+        return None
 
     left, top, right, bot = win32gui.GetWindowRect(hwnd)
     w = right - left
