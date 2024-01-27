@@ -4,7 +4,7 @@
 @author: Steven kangweibaby@163.com
 @date: 2021-05-31
 
-PySide2 棋盘基础控件，只用于棋盘的展示，和点击回调。
+PySide6 棋盘基础控件，只用于棋盘的展示，和点击回调。
 '''
 
 

@@ -279,7 +279,7 @@ class Situation(Generator, Method):
 
     def show(self, csize=20):
         # import threading
-        from PySide2 import QtWidgets
+        from PySide6 import QtWidgets
         from board import BoardFrame
 
         hasapp = QtWidgets.QApplication.instance()
