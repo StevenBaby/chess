@@ -213,23 +213,22 @@ def save_model(model):
 
 
 def load_model() -> nn.Module:
+    logger.info("load model...")
     if not os.path.exists(MODELPATH):
         model = train()
         save_model(model)
-        return model
-
-    with open(MODELPATH, 'rb') as file:
-        model = pickle.loads(file.read())
-    model.eval()
+    else:
+        with open(MODELPATH, 'rb') as file:
+            model = pickle.loads(file.read())
+        model.eval()
+    logger.info("load model finish...")
     return model
 
 
 def get_model():
-    logger.info("get model...")
     global model
     if model is None:
         model = load_model()
-    logger.info("get model finish...")
     return model
 
 

@@ -92,6 +92,10 @@ class Chess(object):
     def chess(c):
         return c & Chess.CMASK
 
+    @staticmethod
+    def color(c):
+        return c & Chess.TMASK
+
     ORIGIN = np.mat(
         np.array(
             [
