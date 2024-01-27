@@ -142,6 +142,8 @@ class Game(BoardFrame, BaseContextMenuMixin):
             'ctrl+alt+x', lambda: self.game_signal.hint.emit())
         keyboard.add_hotkey(
             'ctrl+alt+m', lambda: self.game_signal.method.emit())
+        keyboard.add_hotkey(
+            'ctrl+alt+l', lambda: self.game_signal.connecting.emit())
 
         self.game_signal.reverse.connect(self.reverse)
         self.game_signal.thinking.connect(self.set_thinking)
@@ -199,8 +201,6 @@ class Game(BoardFrame, BaseContextMenuMixin):
         self.method.list.currentItemChanged.connect(self.method_changed)
 
         self.game_signal.connecting.connect(self.connecting)
-        self.connected = False
-        self.connect_inited = False
         # self.qqboard = qqchess.Capturer(self)
         # logger.info("set qqboard %s", self.settings.qqboard)
         # self.qqboard.setGeometry(*self.settings.qqboard)
@@ -373,6 +373,7 @@ class Game(BoardFrame, BaseContextMenuMixin):
 
         self.connected = False
         self.connect_inited = False
+
         self.fpos = None
         self.board.arranging = False
         self.thinking = False
@@ -676,6 +677,8 @@ class Game(BoardFrame, BaseContextMenuMixin):
         if not self.engine.checkmate:
             return
         self.connected = False
+        self.connect_inited = False
+
         if self.engine.sit.turn == Chess.RED:
             self.toast.message("黑方胜!!!")
             # QtWidgets.QMessageBox(self).warning(self, '信息', '')
@@ -719,6 +722,8 @@ class Game(BoardFrame, BaseContextMenuMixin):
     def connecting(self):
         self.connected = not self.connected
         if not self.connected:
+            if hasattr(self, 'connect_task'):
+                self.connect_task.join()
             return
 
         def task():
