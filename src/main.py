@@ -51,7 +51,6 @@ class GameSignal(QtCore.QObject):
     save = QtCore.Signal(None)
     paste = QtCore.Signal(None)
     capture = QtCore.Signal(None)
-    train = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
     draw = QtCore.Signal(None)
@@ -91,7 +90,6 @@ class GameContextMenu(BaseContextMenu):
         items.extend(
             [
                 ('调试', 'Ctrl+D', lambda self: self.signal.debug.emit(), False),
-                ('训练', 'Ctrl+T', lambda self: self.signal.train.emit(), True),
                 'separator',
             ]
         )
@@ -154,7 +152,6 @@ class Game(BoardFrame, BaseContextMenuMixin):
         self.game_signal.load.connect(self.load)
         self.game_signal.save.connect(self.save)
         self.game_signal.paste.connect(self.paste)
-        self.game_signal.train.connect(self.train)
         self.game_signal.capture.connect(self.capture)
 
         self.game_signal.move.connect(self.play)
@@ -595,9 +592,6 @@ class Game(BoardFrame, BaseContextMenuMixin):
 
             self.updateBoard()
             self.try_engine_move()
-
-    def train(self):
-        qqchess.train()
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
