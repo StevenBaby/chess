@@ -137,7 +137,7 @@ class Classifier(nn.Module):
         return idxs
 
 
-def train(epoch=30):
+def train(epoch=120):
     dataset = Dataset()
 
     trainset, valset = torch.utils.data.random_split(

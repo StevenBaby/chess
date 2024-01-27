@@ -221,7 +221,7 @@ class Game(BoardFrame, BaseContextMenuMixin):
     def show_context_menu(self, point):
         if self.board.arranging:
             return self.board.arrange_menu.exec_(self.mapToGlobal(point))
-        self.game_menu.exec_(self.mapToGlobal(point))
+        self.game_menu.exec(self.mapToGlobal(point))
 
     def update_action_state(self):
         if len(self.engine_side) == 2 and not self.engine.checkmate:
