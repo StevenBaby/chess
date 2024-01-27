@@ -3,6 +3,7 @@
 import sys
 import time
 from functools import partial
+import threading
 
 import numpy as np
 
@@ -51,6 +52,7 @@ class GameSignal(QtCore.QObject):
     save = QtCore.Signal(None)
     paste = QtCore.Signal(None)
     capture = QtCore.Signal(None)
+    connecting = QtCore.Signal(None)
 
     move = QtCore.Signal(int)
     draw = QtCore.Signal(None)
@@ -82,6 +84,7 @@ class GameContextMenu(BaseContextMenu):
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
         ('保存', 'Ctrl+S', lambda self: self.signal.save.emit(), True),
         ('截屏', 'Ctrl+K', lambda self: self.signal.capture.emit(), True),
+        ('连线', 'Ctrl+L', lambda self: self.signal.connecting.emit(), True),
         'separator',
         ('设置', 'Ctrl+,', lambda self: self.signal.settings.emit(), False),
     ]
@@ -195,6 +198,9 @@ class Game(BoardFrame, BaseContextMenuMixin):
                 not self.method.isVisible()))
         self.method.list.currentItemChanged.connect(self.method_changed)
 
+        self.game_signal.connecting.connect(self.connecting)
+        self.connected = False
+        self.connect_inited = False
         # self.qqboard = qqchess.Capturer(self)
         # logger.info("set qqboard %s", self.settings.qqboard)
         # self.qqboard.setGeometry(*self.settings.qqboard)
@@ -365,6 +371,8 @@ class Game(BoardFrame, BaseContextMenuMixin):
 
         self.engine = Engine()
 
+        self.connected = False
+        self.connect_inited = False
         self.fpos = None
         self.board.arranging = False
         self.thinking = False
@@ -485,13 +493,16 @@ class Game(BoardFrame, BaseContextMenuMixin):
 
     def capture(self):
         logger.debug("capture...")
-        pred = qqchess.classifier.get_board()
-
-        board = np.zeros((9, 10), dtype=np.int8)
         colors = {0: Chess.RMASK, 1: Chess.BMASK}
-        for loc, idx in pred.items():
-            board[loc] = (idx[0] + 1) | colors[idx[1]]
-        logger.debug(board)
+        board = np.zeros((9, 10), dtype=np.int8)
+        while True:
+            pred = qqchess.classifier.get_board()
+            board0 = board
+            board = np.zeros((9, 10), dtype=np.int8)
+            for loc, idx in pred.items():
+                board[loc] = (idx[0] + 1) | colors[idx[1]]
+            if np.all(board0 == board):
+                break
 
         # 验证数量
         C = Chess
@@ -555,8 +566,6 @@ class Game(BoardFrame, BaseContextMenuMixin):
                 logger.warning("advisor location error %s...", where)
                 return None
 
-        logger.debug(board)
-
         wheres = np.argwhere(board == Chess.K)
 
         turn = Chess.RED
@@ -567,21 +576,37 @@ class Game(BoardFrame, BaseContextMenuMixin):
             self.settings.reverse.setChecked(True)
             turn = Chess.BLACK
 
+        if turn == Chess.RED and self.settings.redside.currentIndex() != 1:
+            self.settings.redside.setCurrentIndex(1)
+            self.settings.blackside.setCurrentIndex(1)
+            self.accepted()
+        if turn == Chess.BLACK and self.settings.redside.currentIndex() != 0:
+            self.settings.redside.setCurrentIndex(0)
+            self.settings.blackside.setCurrentIndex(0)
+            self.accepted()
+
         wheres = np.argwhere((board - self.engine.sit.board) != 0)
-        logger.debug("wheres %s", wheres)
+        # logger.debug("wheres %s", wheres)
         if len(wheres) == 0:
             return
 
         if len(wheres) == 2:
             pos1 = tuple(wheres[0])
             pos2 = tuple(wheres[1])
+            if board[pos1] != 0 and board[pos2] != 0:
+                return
+
             assert (board[pos1] == 0 or board[pos2] == 0)
             assert (board[pos1] != 0 or board[pos2] != 0)
             if board[pos1] == 0:
-                self.move(pos1, pos2)
+                fpos = pos1
+                tpos = pos2
             else:
-                self.move(pos2, pos1)
-        else:
+                fpos = pos2
+                tpos = pos1
+            if Chess.color(board[tpos]) != turn:
+                self.move(fpos, tpos)
+        elif not self.connect_inited:
             logger.info("reset engine situation")
             # self.engine.close()
             # self.engine = Engine()
@@ -592,6 +617,7 @@ class Game(BoardFrame, BaseContextMenuMixin):
 
             self.updateBoard()
             self.try_engine_move()
+            self.connect_inited = True
 
     @QtCore.Slot(tuple, tuple)
     def animate(self, fpos, tpos):
@@ -649,6 +675,7 @@ class Game(BoardFrame, BaseContextMenuMixin):
     def checkmateMessage(self):
         if not self.engine.checkmate:
             return
+        self.connected = False
         if self.engine.sit.turn == Chess.RED:
             self.toast.message("黑方胜!!!")
             # QtWidgets.QMessageBox(self).warning(self, '信息', '')
@@ -688,6 +715,20 @@ class Game(BoardFrame, BaseContextMenuMixin):
     def closeEvent(self, event):
         self.engine.close()
         return super().closeEvent(event)
+
+    def connecting(self):
+        self.connected = not self.connected
+        if not self.connected:
+            return
+
+        def task():
+            while self.connected:
+                self.game_signal.capture.emit()
+                logger.debug('connecting... task')
+                time.sleep(2)
+
+        self.connect_task = threading.Thread(target=task, daemon=True)
+        self.connect_task.start()
 
 
 def main():
