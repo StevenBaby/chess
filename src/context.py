@@ -76,12 +76,10 @@ class BaseContextMenu(QtWidgets.QMenu):
                 continue
 
 
-class BaseContextMenuWidget(QtWidgets.QWidget):
+class BaseContextMenuMixin(object):
 
-    def __init__(self, parent=None) -> None:
-        super().__init__(parent=parent)
-        self.menu = BaseContextMenu(self)
-        self.setupContextMenu()
+    def __init__(self, *args, **kwargs) -> None:
+        pass
 
     def setupContextMenu(self):
         self.setContextMenuPolicy(QtCore.Qt.CustomContextMenu)
@@ -89,6 +87,14 @@ class BaseContextMenuWidget(QtWidgets.QWidget):
 
     def show_context_menu(self, point):
         self.menu.exec(self.mapToGlobal(point))
+
+
+class BaseContextMenuWidget(QtWidgets.QWidget, BaseContextMenuMixin):
+
+    def __init__(self, parent=None) -> None:
+        super().__init__(parent=parent)
+        self.menu = BaseContextMenu(self)
+        self.setupContextMenu()
 
 
 if __name__ == '__main__':
