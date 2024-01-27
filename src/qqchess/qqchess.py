@@ -3,6 +3,8 @@ import matplotlib.pyplot as plt
 import cv2
 from PIL import Image
 
+from logger import logger
+
 BOARD = {
     (0, 0): '車', (0, 3): '卒', (0, 6): '兵', (0, 9): '俥',
     (1, 0): '馬', (1, 2): '砲', (1, 7): '炮', (1, 9): '傌',
@@ -26,8 +28,9 @@ NAME = {
 
 
 def find_board(img: np.array) -> np.ndarray:
-    if isinstance(img, Image.Image):
-        img = np.asarray(img)
+    ratio = img.shape[0] / img.shape[1]
+    width = 1920
+    img = cv2.resize(img, (width, int(ratio * width)))
 
     gray = img[:, :, 0]
     blur = cv2.GaussianBlur(gray, (7, 7), 0.5)
@@ -43,6 +46,7 @@ def find_board(img: np.array) -> np.ndarray:
         (x, y, w, h) = rect
         if w < 100 or h < 100:
             continue
+
         ratio = w / h
         if ratio > 0.91 or ratio < 0.89:
             continue
