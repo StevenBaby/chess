@@ -17,6 +17,7 @@ class BaseContextMenu(QtWidgets.QMenu):
     items = [
         # 名称, 快捷键, 执行的函数, 是否可屏蔽
         ['测试', 'Ctrl+A', lambda self: print(self), True],
+        ['复选框', 'Ctrl+A', lambda self: print(self), True, ['checkable']],
         'separator',
     ]
 
@@ -44,36 +45,51 @@ class BaseContextMenu(QtWidgets.QMenu):
         for action in self.disabled_actions:
             action.setEnabled(enable)
 
+    def getAction(self, name: str):
+        for action in self.actions():
+            if action.text() == name:
+                return action
+        return None
+
     def createShortCut(self):
         for item in self.items:
-            if len(item) == 4:
-                name, key, slot, disabled = item
-                if not key:
-                    continue
-                logger.info(f"add shortcut {name}")
-                shortcut = QtWidgets.QShortcut(QtGui.QKeySequence(key), self.parentWidget())
-                shortcut.activated.connect(partial(slot, self))
-                self.all_shortcuts.append(shortcut)
-                if disabled:
-                    self.disabled_actions.append(shortcut)
+            if item == "separator":
+                continue
+            if len(item) < 4:
+                continue
+            name, key, slot, disabled = item[0:4]
+            if not key:
+                continue
+            print(f"add shortcut {name} {key}")
+            logger.info(f"add shortcut {name}")
+            shortcut = QtWidgets.QShortcut(
+                QtGui.QKeySequence(key), self.parentWidget())
+            shortcut.activated.connect(partial(slot, self))
+            self.all_shortcuts.append(shortcut)
+            if disabled:
+                self.disabled_actions.append(shortcut)
 
     def createContextMenu(self):
         for item in self.items:
-            if len(item) == 4:
-                name, key, slot, disabled = item
-                action = QtWidgets.QAction(name, self)
-                action.setFont(self.font_families)
-                action.setShortcut(key)
-                action.triggered.connect(partial(slot, self))
-                self.addAction(action)
-                self.all_actions.append(action)
-                if disabled:
-                    self.disabled_actions.append(action)
-                logger.info(f"add action {len(self.actions())} {name}")
-                continue
             if item == "separator":
                 self.addSeparator()
                 continue
+            name, key, slot, disabled = item[0:4]
+            args = item[4:] if len(item) > 4 else []
+            print(name, key, slot, disabled, args)
+            action = QtWidgets.QAction(name, self)
+            if 'checkable' in args:
+                print(f"add checkable action {name}")
+                action.setCheckable(True)
+            action.setFont(self.font_families)
+            action.setShortcut(key)
+            action.triggered.connect(partial(slot, self))
+            self.addAction(action)
+            self.all_actions.append(action)
+            if disabled:
+                self.disabled_actions.append(action)
+            logger.info(f"add action {len(self.actions())} {name}")
+            continue
 
 
 class BaseContextMenuWidget(QtWidgets.QWidget):

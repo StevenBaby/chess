@@ -45,6 +45,9 @@ class GameSignal(QtCore.QObject):
     save = QtCore.Signal(None)
     paste = QtCore.Signal(None)
 
+    blackside = QtCore.Signal(None)
+    redside = QtCore.Signal(None)
+
     move = QtCore.Signal(int)
     draw = QtCore.Signal(None)
     resign = QtCore.Signal(None)
@@ -68,6 +71,11 @@ class GameContextMenu(BaseContextMenu):
         ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), False),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
         ('着法', 'Ctrl+M', lambda self: self.signal.method.emit(), False),
+        'separator',
+        ('红方', 'Ctrl+R', lambda self: self.signal.redside.emit(),
+         False, 'checkable'),  # Changed
+        ('黑方', 'Ctrl+B', lambda self: self.signal.blackside.emit(),
+         False, 'checkable'),  # Changed
         'separator',
         ('粘贴', 'Ctrl+V', lambda self: self.signal.paste.emit(), True),
         ('载入', 'Ctrl+O', lambda self: self.signal.load.emit(), True),
@@ -128,6 +136,24 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.redo.connect(self.redo)
         self.game_signal.reset.connect(self.reset)
         self.game_signal.debug.connect(self.debug)
+
+        self.settings.redside.toggled.connect(
+            lambda e: (
+                self.game_menu.getAction('红方').setChecked(e),
+                self.accepted(),
+            )[-1]
+        )
+        self.settings.blackside.toggled.connect(
+            lambda e: (
+                self.game_menu.getAction('黑方').setChecked(e),
+                self.accepted(),
+            )[-1]
+        )
+
+        self.game_signal.redside.connect(
+            lambda: self.settings.redside.toggle())
+        self.game_signal.blackside.connect(
+            lambda: self.settings.blackside.toggle())
 
         self.game_signal.load.connect(self.load)
         self.game_signal.save.connect(self.save)
