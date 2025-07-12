@@ -527,7 +527,10 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.move(self.fpos, pos)
 
     def closeEvent(self, event):
-        self.engine.close()
+        audio.close()
+        for engine in self.engines.values():
+            if engine:
+                engine.close()
         return super().closeEvent(event)
 
 

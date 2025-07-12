@@ -205,7 +205,9 @@ class PipeEngine(Engine):
     def close(self):
         self.running = False
         if self.pipe:
+            logger.info("close pipe %s", self.filename)
             self.pipe.terminate()
+            self.pipe = None
         self.parser_thread.join()
         self.join()
 

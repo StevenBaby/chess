@@ -47,3 +47,8 @@ def play(audio_type):
     logger.info("play audio %s", audio)
     pygame.mixer.music.load(audio)
     pygame.mixer.music.play()
+
+
+def close():
+    """Shut down the pygame mixer."""
+    pygame.mixer.quit()
