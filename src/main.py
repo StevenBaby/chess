@@ -241,12 +241,12 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.engine_side = []
         self.human_side = []
 
-        if self.settings.redside.currentIndex() == 0:
-            self.human_side.append(Chess.RED)
-        else:
+        if self.settings.redside.isChecked():
             self.engine_side.append(Chess.RED)
+        else:
+            self.human_side.append(Chess.RED)
 
-        if self.settings.blackside.currentIndex() == 0:
+        if self.settings.blackside.isChecked():
             self.engine_side.append(Chess.BLACK)
         else:
             self.human_side.append(Chess.BLACK)

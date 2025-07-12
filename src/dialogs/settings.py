@@ -46,8 +46,8 @@ class SettingsDialog(BaseDialog):
         'animate': True,
         'standard_method': False,
 
-        'redside': 0,
-        'blackside': 0,
+        'redside': False,
+        'blackside': True,
 
         'red_engine': 0,
         'black_engine': 0,
