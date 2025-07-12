@@ -154,6 +154,7 @@ class SettingsDialog(BaseDialog):
         return data
 
     def set_settings(self, settings: dict):
+        logger.info("set settings %s", settings)
         for name, value in self.SETTINGS.items():
             attr = getattr(self, name)
             if name in settings:
@@ -207,6 +208,7 @@ class SettingsDialog(BaseDialog):
         settings = self.get_default()
 
         if not os.path.exists(filename):
+            self.set_settings(settings)
             return
 
         with open(filename, encoding='utf8') as file:

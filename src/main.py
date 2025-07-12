@@ -40,6 +40,7 @@ class GameSignal(QtCore.QObject):
     redo = QtCore.Signal(None)
     reset = QtCore.Signal(None)
     debug = QtCore.Signal(None)
+    reverse = QtCore.Signal(None)
 
     load = QtCore.Signal(None)
     save = QtCore.Signal(None)
@@ -67,6 +68,7 @@ class GameContextMenu(BaseContextMenu):
         ('提示', 'Ctrl+H', lambda self: self.signal.hint.emit(), True),
         ('悔棋', 'Ctrl+Z', lambda self: self.signal.undo.emit(), True),
         ('重走', 'Ctrl+Shift+Z', lambda self: self.signal.redo.emit(), True),
+        ('翻转', 'Ctrl+I', lambda self: self.signal.reverse.emit(), False),
         'separator',
         ('重置', 'Ctrl+N', lambda self: self.signal.reset.emit(), False),
         ('布局', 'Ctrl+A', lambda self: self.signal.arrange.emit(), True),
@@ -136,6 +138,7 @@ class Game(BoardFrame, BaseContextMenuWidget):
         self.game_signal.redo.connect(self.redo)
         self.game_signal.reset.connect(self.reset)
         self.game_signal.debug.connect(self.debug)
+        self.game_signal.reverse.connect(lambda: self.settings.reverse.toggle())
 
         self.settings.redside.toggled.connect(
             lambda e: (
